@@ -1,3 +1,9 @@
+package interpreter;
+
+import scanner.Scanner;
+import scanner.Token;
+import structure.Program;
+
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
@@ -25,6 +31,8 @@ public class Interpreter {
 //        Block block = Block.readBlock(source);
 //
 //        System.out.println(block);
+        Program program = Program.readBlock(source);
+        program.getStatementList().forEach(System.out::println);
         List<Token> tokens = scanner.scanTokens();
 
         // For now, just print the tokens.
@@ -38,7 +46,7 @@ public class Interpreter {
         run(new String(bytes, Charset.defaultCharset()));
     }
 
-    static void error(int line, String where, String message) {
+    public static void error(int line, String where, String message) {
         report(line, where, message);
     }
 

@@ -1,3 +1,5 @@
+package scanner;
+
 import java.util.Objects;
 
 public final class Token {

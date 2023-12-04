@@ -1,6 +1,9 @@
+package scanner;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import interpreter.Interpreter;
 
 public class Scanner {
 
@@ -22,7 +25,7 @@ public class Scanner {
         return new Scanner(source).scanTokens();
     }
 
-    List<Token> scanTokens() {
+    public List<Token> scanTokens() {
         while (!isAtEnd()) {
             // We are at the beginning of the next lexeme.
             start = current;
@@ -123,8 +126,12 @@ public class Scanner {
             case '\n':
                 line++;
                 break;
-            case '"', '\'':
+            case '"':
                 string();
+                break;
+            case '\'':
+                addToken(TokenType.CHAR, peek());
+                advance();
                 break;
             default:
                 if (isDigit(c)) {
@@ -182,8 +189,9 @@ public class Scanner {
 
     private void string() {
         char peeked = peek();
-        while (!Objects.equals(peeked, '"') &&
-               !Objects.equals(peeked, '\'') && !isAtEnd()) {
+        while (!Objects.equals(peeked, '"')
+//            && !Objects.equals(peeked, '\'') && !isAtEnd()
+        ) {
             if (peek() == '\n') line++;
             advance();
             peeked = peek();
@@ -194,10 +202,8 @@ public class Scanner {
             return;
         }
 
-        // The closing ".
         advance();
 
-        // Trim the surrounding quotes.
         String value = source.substring(start + 1, current - 1);
         addToken(TokenType.STRING, value);
     }

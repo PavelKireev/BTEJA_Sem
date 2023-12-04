@@ -1,11 +1,15 @@
+package scanner;
+
 public enum TokenType {
 
     IDENT("ident"),
     NUMBER("number"),
     CONST("CONST"),
+    MODULE("MODULE"),
+    FROM("FROM"),
+    IMPORT("IMPORT"),
     VAR("VAR"),
-    PROCEDURE("PROC"),
-    CALL("call"),
+    PROCEDURE("PROCEDURE"),
     BEGIN("BEGIN"),
     END("END"),
     IF("IF"),
@@ -30,10 +34,12 @@ public enum TokenType {
     MINUS("-"),
     STAR("*"),
     SLASH("/"),
+    DIV("DIV"),
     OPEN_PARENTHESIS("("),
     CLOSE_PARENTHESIS(")"),
     DOT("."),
-    STRING(" "),
+    STRING(""),
+    CHAR(""),
     COLON(":"),
     OPEN_BRACKET("["),
     CLOSE_BRACKET("]");
