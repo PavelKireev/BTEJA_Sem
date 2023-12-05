@@ -112,29 +112,39 @@ public abstract class Statement {
     }
 
     public static class For extends Statement {
-        final Token ident;
-        final BasicExpression from;
+        final Statement index;
         final BasicExpression to;
+        final BasicExpression by;
         final List<Statement> body;
 
-        public For(Token ident, BasicExpression from,
-                   BasicExpression to, List<Statement> body) {
-            this.ident = ident;
-            this.from = from;
+        public For(Statement index, BasicExpression to,
+                   BasicExpression by, List<Statement> body) {
+            this.index = index;
             this.to = to;
+            this.by = by;
             this.body = body;
         }
     }
 
     public static class Switch extends Statement {
         final BasicExpression expression;
-        final List<Statement> cases;
-        final List<Statement> defaultCase;
+        final List<Statement.Case> cases;
+        final Statement.Case defaultCase;
 
-        public Switch(BasicExpression expression, List<Statement> cases, List<Statement> defaultCase) {
+        public Switch(BasicExpression expression, List<Case> cases, Case defaultCase) {
             this.expression = expression;
             this.cases = cases;
             this.defaultCase = defaultCase;
+        }
+    }
+
+    public static class Case extends Statement {
+        final BasicExpression expression;
+        final List<Statement> body;
+
+        public Case(BasicExpression expression, List<Statement> body) {
+            this.expression = expression;
+            this.body = body;
         }
     }
 

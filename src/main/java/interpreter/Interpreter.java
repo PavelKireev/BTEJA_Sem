@@ -28,9 +28,7 @@ public class Interpreter {
 
     private static void run(String source) {
         Scanner scanner = new Scanner(source);
-//        Block block = Block.readBlock(source);
-//
-//        System.out.println(block);
+
         Program program = Program.readBlock(source);
         program.getStatementList().forEach(System.out::println);
         List<Token> tokens = scanner.scanTokens();

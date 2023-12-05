@@ -105,6 +105,8 @@ public class Scanner {
                     addToken(TokenType.LESS_EQUAL);
                 } else if (match('>')) {
                     addToken(TokenType.NOT_EQUAL);
+                } else {
+                    addToken(TokenType.LESS);
                 }
                 break;
             case '>':
@@ -131,6 +133,7 @@ public class Scanner {
                 break;
             case '\'':
                 addToken(TokenType.CHAR, peek());
+                advance();
                 advance();
                 break;
             default:

@@ -18,6 +18,8 @@ public enum TokenType {
     ELSE("ELSE"),
     WHILE("WHILE"),
     FOR("FOR"),
+    TO("TO"),
+    BY("BY"),
     DO("DO"),
     QUESTION_MARK("?"),
     BANG("!"),

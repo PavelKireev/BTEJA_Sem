@@ -112,7 +112,7 @@ public class Program {
     }
 
     public List<Statement.Const> readConst() {
-        if (!TokenType.CONST.equals(tokenList.get(tokenIndex + 1).type())) {
+        if (!TokenType.CONST.equals(tokenList.get(tokenIndex).type())) {
             return Collections.emptyList();
         }
 
@@ -156,7 +156,7 @@ public class Program {
 
    public void readVar(List<Statement.Var> vars, List<Statement.VarArray> varArrays) {
 
-        if (!TokenType.VAR.equals(tokenList.get(tokenIndex + 1).type())) {
+        if (!TokenType.VAR.equals(tokenList.get(tokenIndex).type())) {
             return;
         }
 
@@ -193,8 +193,10 @@ public class Program {
                     readExpression(new BasicExpression.Literal(currentToken));
 
                 vars.add(new Statement.Var(varName, type, initializer));
+                currentToken = peekToken();
             } else if (TokenType.SEMICOLON.equals(currentToken.type())) {
                 vars.add(new Statement.Var(varName, type, null));
+                currentToken = peekToken();
             } else if (TokenType.OPEN_BRACKET.equals(currentToken.type())) {
                 try {
                     int indexFrom = Integer.parseInt(peekToken().lexeme());
@@ -281,7 +283,9 @@ public class Program {
         body.addAll(vars);
         body.addAll(varArrays);
 
-        currentToken = peekToken();
+        if(TokenType.BEGIN.equals(tokenList.get(tokenIndex).type())) {
+            currentToken = peekToken();
+        }
 
         while (!TokenType.END.equals(currentToken.type())) {
             body.add(readStatement());
@@ -297,7 +301,7 @@ public class Program {
         return switch (token.type()) {
             case IF -> readIfStatement();
             case WHILE -> readWhileStatement();
-//            case PROCEDURE -> readProcedures();
+            case FOR -> readForStatement();
             case IDENT -> readAssignmentOrCallStatement();
             case QUESTION_MARK -> readReadStatement();
             case BANG -> readWriteStatement();
@@ -330,22 +334,59 @@ public class Program {
     private Statement.While readWhileStatement() {
         List<Statement> body = new ArrayList<>();
         peekToken();
-        Token currentToken = peekToken();
-
-//        if (!scanner.TokenType.ODD.equals(currentToken.type())) {
-//            throw new IllegalTokenException("Invalid while condition");
-//        }
 
         BasicExpression condition = readExpression(new BasicExpression.Literal(peekToken()));
 
-        if (!TokenType.DO.equals(peekToken().type())) {
-            throw new IllegalTokenException("Invalid while condition");
-        }
-
-        while (!TokenType.END.equals(tokenList.get(tokenIndex - 1).type())) {
+        while (!TokenType.END.equals(tokenList.get(tokenIndex).type())) {
             body.add(readStatement());
         }
+        peekToken();
+        peekToken();
         return new Statement.While(condition, body);
+    }
+
+    public Statement.For readForStatement() {
+        List<Statement> body = new ArrayList<>();
+        peekToken();
+
+        if (TokenType.OPEN_PARENTHESIS.equals(tokenList.get(tokenIndex).type())) {
+            peekToken();
+        }
+
+        Statement index = readAssignmentOrCallStatement();
+
+        if (!TokenType.TO.equals(peekToken().type())) {
+            throw new IllegalTokenException("Invalid for condition");
+        }
+
+        Token currentToken = peekToken();
+        if (TokenType.OPEN_PARENTHESIS.equals(currentToken.type())) {
+            peekToken();
+        }
+        BasicExpression toExpression = readExpression(new BasicExpression.Literal(currentToken));
+
+        BasicExpression byExpression = null;
+        if (TokenType.BY.equals(tokenList.get(tokenIndex).type())) {
+            peekToken();
+            byExpression = readExpression(new BasicExpression.Literal(peekToken()));
+        }
+
+        if (!TokenType.DO.equals(tokenList.get(tokenIndex).type())) {
+            peekToken();
+        }
+
+        if (!TokenType.DO.equals(tokenList.get(tokenIndex).type())) {
+            throw new IllegalTokenException("Invalid FOR condition");
+        }
+
+        peekToken();
+
+        while (!TokenType.END.equals(tokenList.get(tokenIndex).type())) {
+            body.add(readStatement());
+        }
+        peekToken();
+        peekToken();
+        return new Statement.For(index, toExpression, byExpression, body);
     }
 
     private Statement readAssignmentOrCallStatement() {
@@ -374,18 +415,27 @@ public class Program {
 
         if (TokenType.ASSIGNMENT.equals(currentToken.type())) {
             currentToken = peekToken();
+            if (TokenType.OPEN_PARENTHESIS.equals(currentToken.type())) {
+                currentToken = peekToken();
+            }
             expression = readExpression(new BasicExpression.Literal(currentToken));
+            if (TokenType.SEMICOLON.equals(tokenList.get(tokenIndex).type())) {
+                peekToken();
+            }
             return new Statement.Assignment(ident, expression);
         } else if (TokenType.SEMICOLON.equals(currentToken.type())) {
             return new Statement.Call(ident, Collections.emptyList());
         } else if (TokenType.OPEN_PARENTHESIS.equals(currentToken.type())) {
             currentToken = peekToken();
             List<BasicExpression> argumentExpressions = new ArrayList<>();
-            while (TokenType.CLOSE_PARENTHESIS.equals(tokenList.get(tokenIndex).type())) {
+            while (!TokenType.CLOSE_PARENTHESIS.equals(tokenList.get(tokenIndex).type())) {
                 argumentExpressions.add(readExpression(new BasicExpression.Literal(currentToken)));
                 peekToken();
             }
             peekToken();
+            if (TokenType.SEMICOLON.equals(tokenList.get(tokenIndex).type())) {
+                peekToken();
+            }
             return new Statement.Call(ident, argumentExpressions);
         } else {
             throw new IllegalTokenException(String.format(
@@ -396,6 +446,16 @@ public class Program {
     }
 
     private BasicExpression readExpression(BasicExpression expression) {
+        if (expression instanceof BasicExpression.Literal &&
+            ((BasicExpression.Literal) expression).value.lexeme().equals("-")) {
+            Integer number = ((Double) peekToken().literal()).intValue() * -1;
+
+            expression = new BasicExpression.Literal(new Token(TokenType.NUMBER,
+                                                               number.toString(),
+                                                               number,
+                                                               ((BasicExpression.Literal) expression).value.line()));
+        }
+
         if (!MATH_OPERATION_TYPE_LIST.contains(tokenList.get(tokenIndex).type()) &&
             !BOOLEAN_OPERATION_TYPE_LIST.contains(tokenList.get(tokenIndex).type())) {
             return expression;
@@ -422,7 +482,6 @@ public class Program {
                     if (MATH_OPERATION_TYPE_LIST.contains(tokenList.get(tokenIndex).type())) {
                         currentToken = peekToken();
                     }
-//                    peekToken();
                 }
                 currentToken = peekToken();
                 expression = new BasicExpression.Binary(expression, operator,
