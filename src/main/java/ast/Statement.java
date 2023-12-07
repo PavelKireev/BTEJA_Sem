@@ -151,10 +151,18 @@ public abstract class Statement {
     public static class Assignment extends Statement {
         final Token ident;
         final BasicExpression expression;
+        final Statement.Call call;
 
         public Assignment(Token ident, BasicExpression expression) {
             this.ident = ident;
             this.expression = expression;
+            this.call = null;
+        }
+
+        public Assignment(Token ident, Call call) {
+            this.ident = ident;
+            this.call = call;
+            this.expression = null;
         }
     }
 

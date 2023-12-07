@@ -91,9 +91,6 @@ public class Scanner {
             case '=':
                 addToken(TokenType.EQUAL);
                 break;
-            case '?':
-                addToken(TokenType.QUESTION_MARK);
-                break;
             case ':':
                 if(match('='))
                     addToken(TokenType.ASSIGNMENT);
@@ -111,6 +108,9 @@ public class Scanner {
                 break;
             case '>':
                 addToken(match('=') ? TokenType.GREATER_EQUAL : TokenType.GREATER);
+                break;
+            case '#':
+                addToken(TokenType.BOOLEAN_EQUAL);
                 break;
             case '/':
                 if (match('/')) {

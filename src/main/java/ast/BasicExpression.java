@@ -35,11 +35,20 @@ public abstract class BasicExpression {
     }
 
     public static class Numeric extends BasicExpression {
-        Numeric(Token value) {
+        public Numeric(Token value) {
             this.value = value;
         }
 
         final Token value;
+    }
+
+    public static class Negation extends BasicExpression {
+
+        public Negation(BasicExpression negatedValue) {
+            this.negatedValue = negatedValue;
+        }
+
+        final BasicExpression negatedValue;
     }
 
     public static class Empty extends BasicExpression {
