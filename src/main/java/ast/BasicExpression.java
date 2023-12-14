@@ -2,6 +2,8 @@ package ast;
 
 import scanner.Token;
 
+import java.util.List;
+
 public abstract class BasicExpression {
 
     public static class Binary extends BasicExpression {
@@ -49,6 +51,16 @@ public abstract class BasicExpression {
         }
 
         final BasicExpression negatedValue;
+    }
+
+    public static class ProcedureCall extends BasicExpression {
+        public final Token name;
+        public final List<BasicExpression> arguments;
+
+        public ProcedureCall(Token name, List<BasicExpression> arguments) {
+            this.name = name;
+            this.arguments = arguments;
+        }
     }
 
     public static class Empty extends BasicExpression {

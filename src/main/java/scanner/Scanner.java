@@ -7,9 +7,9 @@ import interpreter.Interpreter;
 
 public class Scanner {
 
-    private int start = 0;
-    private int current = 0;
-    private int line = 1;
+    private int start;
+    private int current;
+    private int line;
 
     private final String source;
     private final List<Token> tokens = new ArrayList<>();
@@ -18,7 +18,7 @@ public class Scanner {
         this.source = source;
         this.start = 0;
         this.current = 0;
-        this.line = 0;
+        this.line = 1;
     }
 
     public static List<Token> getTokens(String source) {
@@ -48,7 +48,11 @@ public class Scanner {
             case '(':
                 if (match('*')) {
                     // A comment goes until the end of the line.
-                    while (peek() != '*' && !isAtEnd()) advance();
+                    while (!(String.valueOf(peek()) +
+                           source.charAt(current + 1)).equals("*)") && !isAtEnd()) {
+                        if (peek() == '\n') line++;
+                        advance();
+                    }
                     advance();
                     if (advance() != ')') {
                         Interpreter.error(line, "", "Unterminated comment.");
@@ -119,6 +123,9 @@ public class Scanner {
                 } else {
                     addToken(TokenType.SLASH);
                 }
+                break;
+            case '|':
+                addToken(TokenType.PIPE);
                 break;
             case ' ':
             case '\r':

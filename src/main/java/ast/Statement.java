@@ -3,6 +3,7 @@ package ast;
 import scanner.Token;
 
 import java.util.List;
+import java.util.Set;
 
 public abstract class Statement {
 
@@ -34,31 +35,41 @@ public abstract class Statement {
 
     public static class Procedure extends Statement {
         public final Token name;
+        public final Token returnType;
+        public final List<Var> parameters;
         public final List<Statement> body;
 
-        public Procedure(Token name, List<Statement> body) {
+        public Procedure(Token name, Token returnType, List<Var> parameters, List<Statement> body) {
             this.name = name;
+            this.returnType = returnType;
+            this.parameters = parameters;
             this.body = body;
         }
     }
 
     public static class If extends Statement {
         final BasicExpression condition;
-        final Statement thenBranch;
+        final List<Statement> body;
+        final List<Elsif> elsifBranches;
+        final ElseBranch elseBranch;
 
-        public If(BasicExpression condition, Statement thenBranch) {
+        public If(BasicExpression condition, List<Statement> body,
+                  List<Elsif> elsifBranches, ElseBranch elseBranch) {
             this.condition = condition;
-            this.thenBranch = thenBranch;
+            this.body = body;
+            this.elsifBranches = elsifBranches;
+            this.elseBranch = elseBranch;
         }
     }
 
-    public static class ThenBranch extends Statement {
+    public static class Elsif extends Statement {
+        BasicExpression condition;
         List<Statement> statements;
 
-        public ThenBranch(List<Statement> statements) {
+        public Elsif(BasicExpression condition, List<Statement> statements) {
+            this.condition = condition;
             this.statements = statements;
         }
-
     }
 
     public static class ElseBranch extends Statement {
@@ -67,8 +78,8 @@ public abstract class Statement {
         public ElseBranch(List<Statement> statements) {
             this.statements = statements;
         }
-
     }
+
 
     public static class Var extends Statement {
         public final Token name;
@@ -126,43 +137,37 @@ public abstract class Statement {
         }
     }
 
-    public static class Switch extends Statement {
-        final BasicExpression expression;
-        final List<Statement.Case> cases;
-        final Statement.Case defaultCase;
+    public static class Case extends Statement {
 
-        public Switch(BasicExpression expression, List<Case> cases, Case defaultCase) {
-            this.expression = expression;
-            this.cases = cases;
-            this.defaultCase = defaultCase;
+        final Token ident;
+        final List<CaseBranch> branches;
+        final List<Statement> defaultBranch;
+
+        public Case(Token ident, List<CaseBranch> branches, List<Statement> defaultBranch) {
+            this.ident = ident;
+            this.branches = branches;
+            this.defaultBranch = defaultBranch;
         }
     }
 
-    public static class Case extends Statement {
-        final BasicExpression expression;
+    public static class CaseBranch extends Statement {
+        final Set<Integer> range;
         final List<Statement> body;
 
-        public Case(BasicExpression expression, List<Statement> body) {
-            this.expression = expression;
+        public CaseBranch(Set<Integer> range, List<Statement> body) {
+            this.range = range;
             this.body = body;
         }
+
     }
 
     public static class Assignment extends Statement {
         final Token ident;
         final BasicExpression expression;
-        final Statement.Call call;
 
         public Assignment(Token ident, BasicExpression expression) {
             this.ident = ident;
             this.expression = expression;
-            this.call = null;
-        }
-
-        public Assignment(Token ident, Call call) {
-            this.ident = ident;
-            this.call = call;
-            this.expression = null;
         }
     }
 
