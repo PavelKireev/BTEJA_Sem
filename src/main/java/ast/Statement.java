@@ -39,11 +39,20 @@ public abstract class Statement {
         public final List<Var> parameters;
         public final List<Statement> body;
 
-        public Procedure(Token name, Token returnType, List<Var> parameters, List<Statement> body) {
+        public Procedure(Token name, Token returnType,
+                         List<Var> parameters, List<Statement> body) {
             this.name = name;
             this.returnType = returnType;
             this.parameters = parameters;
             this.body = body;
+        }
+    }
+
+    public static class Return extends Statement {
+        final BasicExpression expression;
+
+        public Return(BasicExpression expression) {
+            this.expression = expression;
         }
     }
 
@@ -162,10 +171,10 @@ public abstract class Statement {
     }
 
     public static class Assignment extends Statement {
-        final Token ident;
+        final BasicExpression ident;
         final BasicExpression expression;
 
-        public Assignment(Token ident, BasicExpression expression) {
+        public Assignment(BasicExpression ident, BasicExpression expression) {
             this.ident = ident;
             this.expression = expression;
         }

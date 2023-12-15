@@ -53,6 +53,16 @@ public abstract class BasicExpression {
         final BasicExpression negatedValue;
     }
 
+    public static class ArrayVariable extends BasicExpression {
+        public final Token name;
+        public final Token index;
+
+        public ArrayVariable(Token name, Token index) {
+            this.name = name;
+            this.index = index;
+        }
+    }
+
     public static class ProcedureCall extends BasicExpression {
         public final Token name;
         public final List<BasicExpression> arguments;

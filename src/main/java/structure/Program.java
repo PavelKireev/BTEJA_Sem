@@ -263,7 +263,40 @@ public class Program {
             }
             currentToken = peekToken();
 
-            if (TokenType.VAR.equals(currentToken.type())) {
+            if (TokenType.OPEN_PARENTHESIS.equals(currentToken.type())) {
+                while (!TokenType.CLOSE_PARENTHESIS.equals(currentToken.type())) {
+                    currentToken = peekToken();
+                    if (TokenType.IDENT.equals(currentToken.type())) {
+                        Token parameterName = currentToken;
+                        currentToken = peekToken();
+                        if (TokenType.COLON.equals(currentToken.type())) {
+                            currentToken = peekToken();
+                            if (TokenType.IDENT.equals(currentToken.type())) {
+                                Token parameterType = currentToken;
+                                currentToken = peekToken();
+                                parameters.add(new Statement.Var(parameterName, parameterType, null));
+                            }
+                        }
+                    }
+                }
+                if (TokenType.CLOSE_PARENTHESIS.equals(currentToken.type())) {
+                    currentToken = peekToken();
+                }
+            }
+
+            if (TokenType.COLON.equals(currentToken.type())) {
+                currentToken = peekToken();
+                if (TokenType.IDENT.equals(currentToken.type())) {
+                    returnType = currentToken;
+                    peekToken();
+                }
+            }
+
+            if (TokenType.SEMICOLON.equals(currentToken.type())) {
+                currentToken = peekToken();
+            }
+
+            if (TokenType.VAR.equals(tokenList.get(tokenIndex).type())) {
                 readVar(vars, varArrays);
                 body.addAll(vars);
                 body.addAll(varArrays);
@@ -281,48 +314,6 @@ public class Program {
             }
 
             while (!TokenType.END.equals(currentToken.type())) {
-
-                if (TokenType.OPEN_PARENTHESIS.equals(currentToken.type())) {
-                    while (!TokenType.CLOSE_PARENTHESIS.equals(currentToken.type())) {
-                        currentToken = peekToken();
-                        if (TokenType.IDENT.equals(currentToken.type())) {
-                            Token parameterName = currentToken;
-                            currentToken = peekToken();
-                            if (TokenType.COLON.equals(currentToken.type())) {
-                                currentToken = peekToken();
-                                if (TokenType.IDENT.equals(currentToken.type())) {
-                                    Token parameterType = currentToken;
-                                    currentToken = peekToken();
-                                    if (TokenType.SEMICOLON.equals(currentToken.type())) {
-                                        parameters.add(new Statement.Var(parameterName, parameterType, null));
-                                        currentToken = peekToken();
-                                    }
-                                }
-                            }
-                        }
-                    }
-                    if (TokenType.CLOSE_PARENTHESIS.equals(currentToken.type())) {
-                        currentToken = peekToken();
-                    }
-                }
-
-                if (TokenType.COLON.equals(currentToken.type())) {
-                    currentToken = peekToken();
-                    if (TokenType.IDENT.equals(currentToken.type())) {
-                        returnType = currentToken;
-                        peekToken();
-                    }
-                }
-
-
-                if (TokenType.COLON.equals(currentToken.type())) {
-                    currentToken = peekToken();
-                    if (TokenType.IDENT.equals(currentToken.type())) {
-                        returnType = currentToken;
-                        peekToken();
-                    }
-                }
-
                 if (TokenType.SEMICOLON.equals(tokenList.get(tokenIndex).type())) {
                     peekToken();
                 }
@@ -342,6 +333,21 @@ public class Program {
             peekToken();
             procedures.add(new Statement.Procedure(name, returnType, parameters, body));
         }
+    }
+
+    private Statement readReturnStatement() {
+        Token currentToken = peekToken();
+        if (TokenType.RETURN.equals(currentToken.type())) {
+            currentToken = peekToken();
+        }
+
+        BasicExpression expression = readExpression(new BasicExpression.Literal(currentToken));
+
+        if (TokenType.SEMICOLON.equals(tokenList.get(tokenIndex).type())) {
+            peekToken();
+        }
+
+        return new Statement.Return(expression);
     }
 
     private Statement readMain() {
@@ -379,10 +385,11 @@ public class Program {
             case IDENT -> readAssignmentOrCallStatement();
             case QUESTION_MARK -> readReadStatement();
             case BANG -> readWriteStatement();
+            case RETURN -> readReturnStatement();
             case BEGIN -> readMain();
             default -> throw new IllegalTokenException(
                 String.format("Illegal token (%s) during Statement reading, line: %d ",
-                    token.type(), token.line()));
+                              token.type(), token.line()));
         };
     }
 
@@ -594,9 +601,20 @@ public class Program {
             if (TokenType.SEMICOLON.equals(tokenList.get(tokenIndex).type())) {
                 peekToken();
             }
-            return new Statement.Assignment(ident, expression);
+            return new Statement.Assignment(new BasicExpression.Literal(ident), expression);
         } else if (TokenType.SEMICOLON.equals(currentToken.type())) {
             return new Statement.Call(ident, Collections.emptyList());
+        } else if (TokenType.OPEN_BRACKET.equals(currentToken.type())) {
+            currentToken = peekToken();
+            Token index = currentToken;
+            peekToken();
+            peekToken();
+            currentToken = peekToken();
+            if (TokenType.SEMICOLON.equals(tokenList.get(tokenIndex).type())) {
+                peekToken();
+            }
+            expression = readExpression(new BasicExpression.Literal(currentToken));
+            return new Statement.Assignment(new BasicExpression.ArrayVariable(ident, index), expression);
         } else if (TokenType.OPEN_PARENTHESIS.equals(currentToken.type())) {
             currentToken = peekToken();
             List<BasicExpression> argumentExpressions = new ArrayList<>();
@@ -657,6 +675,16 @@ public class Program {
             }
             peekToken();
             expression = new BasicExpression.ProcedureCall(ident, argumentExpressions);
+        }
+
+        if (expression instanceof BasicExpression.Literal &&
+            TokenType.IDENT.equals(((BasicExpression.Literal) expression).value.type()) &&
+            TokenType.OPEN_BRACKET.equals(tokenList.get(tokenIndex).type())) {
+            Token ident = ((BasicExpression.Literal) expression).value;
+            peekToken();
+            Token index = peekToken();
+            peekToken();
+            expression = new BasicExpression.ArrayVariable(ident, index);
         }
 
         if (expression instanceof BasicExpression.Literal &&

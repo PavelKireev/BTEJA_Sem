@@ -7,12 +7,12 @@ VAR
 	nfact: CARDINAL;
 
 BEGIN
-	IF n > 8 THEN RETURN 0 
+	IF n > 8 THEN RETURN 0;
 	END;
 	
 	nfact:=1;
 	FOR n:=n TO 1 BY -1 DO
-	    nfact:=nfact*n
+	    nfact:=nfact*n;
 	END;
 
 	RETURN nfact;
@@ -27,6 +27,6 @@ BEGIN
    FOR i:=0 TO 8 DO 
 	WriteCard(i,3);
 	WriteCard(Fact(i),12);
-	WriteLn
-   END
+	WriteLn;
+   END;
 END Factorial.	
