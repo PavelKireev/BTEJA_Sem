@@ -7,19 +7,15 @@ import java.util.Set;
 
 public abstract class Statement {
 
-    public static class Block extends Statement {
-        final List<Statement> statements;
-
-        Block(List<Statement> statements) {
-            this.statements = statements;
-        }
-    }
-
     public static class Module extends Statement {
         final Token name;
 
         public Module(Token name) {
             this.name = name;
+        }
+
+        public Token getName() {
+            return name;
         }
     }
 
@@ -31,13 +27,21 @@ public abstract class Statement {
             this.module = module;
             this.imports = imports;
         }
+
+        public Token getModule() {
+            return module;
+        }
+
+        public List<String> getImports() {
+            return imports;
+        }
     }
 
     public static class Procedure extends Statement {
-        public final Token name;
-        public final Token returnType;
-        public final List<Var> parameters;
-        public final List<Statement> body;
+        final Token name;
+        final Token returnType;
+        final List<Var> parameters;
+        final List<Statement> body;
 
         public Procedure(Token name, Token returnType,
                          List<Var> parameters, List<Statement> body) {
@@ -46,6 +50,22 @@ public abstract class Statement {
             this.parameters = parameters;
             this.body = body;
         }
+
+        public Token getName() {
+            return name;
+        }
+
+        public Token getReturnType() {
+            return returnType;
+        }
+
+        public List<Var> getParameters() {
+            return parameters;
+        }
+
+        public List<Statement> getBody() {
+            return body;
+        }
     }
 
     public static class Return extends Statement {
@@ -53,6 +73,10 @@ public abstract class Statement {
 
         public Return(BasicExpression expression) {
             this.expression = expression;
+        }
+
+        public BasicExpression getExpression() {
+            return expression;
         }
     }
 
@@ -69,23 +93,51 @@ public abstract class Statement {
             this.elsifBranches = elsifBranches;
             this.elseBranch = elseBranch;
         }
+
+        public BasicExpression getCondition() {
+            return condition;
+        }
+
+        public List<Statement> getBody() {
+            return body;
+        }
+
+        public List<Elsif> getElsifBranches() {
+            return elsifBranches;
+        }
+
+        public ElseBranch getElseBranch() {
+            return elseBranch;
+        }
     }
 
     public static class Elsif extends Statement {
-        BasicExpression condition;
-        List<Statement> statements;
+        final BasicExpression condition;
+        final List<Statement> statements;
 
         public Elsif(BasicExpression condition, List<Statement> statements) {
             this.condition = condition;
             this.statements = statements;
         }
+
+        public BasicExpression getCondition() {
+            return condition;
+        }
+
+        public List<Statement> getStatements() {
+            return statements;
+        }
     }
 
     public static class ElseBranch extends Statement {
-        List<Statement> statements;
+        final List<Statement> statements;
 
         public ElseBranch(List<Statement> statements) {
             this.statements = statements;
+        }
+
+        public List<Statement> getStatements() {
+            return statements;
         }
     }
 
@@ -99,6 +151,18 @@ public abstract class Statement {
             this.name = name;
             this.type = type;
             this.initializer = initializer;
+        }
+
+        public Token getName() {
+            return name;
+        }
+
+        public Token getType() {
+            return type;
+        }
+
+        public BasicExpression getInitializer() {
+            return initializer;
         }
     }
 
@@ -117,6 +181,26 @@ public abstract class Statement {
             this.indexTo = indexTo;
             this.initializer = initializer;
         }
+
+        public Token getName() {
+            return name;
+        }
+
+        public Token getType() {
+            return type;
+        }
+
+        public int getIndexFrom() {
+            return indexFrom;
+        }
+
+        public int getIndexTo() {
+            return indexTo;
+        }
+
+        public BasicExpression getInitializer() {
+            return initializer;
+        }
     }
 
     public static class While extends Statement {
@@ -129,6 +213,13 @@ public abstract class Statement {
         final BasicExpression condition;
         final List<Statement> body;
 
+        public BasicExpression getCondition() {
+            return condition;
+        }
+
+        public List<Statement> getBody() {
+            return body;
+        }
     }
 
     public static class For extends Statement {
@@ -144,6 +235,22 @@ public abstract class Statement {
             this.by = by;
             this.body = body;
         }
+
+        public Statement getIndex() {
+            return index;
+        }
+
+        public BasicExpression getTo() {
+            return to;
+        }
+
+        public BasicExpression getBy() {
+            return by;
+        }
+
+        public List<Statement> getBody() {
+            return body;
+        }
     }
 
     public static class Case extends Statement {
@@ -157,6 +264,18 @@ public abstract class Statement {
             this.branches = branches;
             this.defaultBranch = defaultBranch;
         }
+
+        public Token getIdent() {
+            return ident;
+        }
+
+        public List<CaseBranch> getBranches() {
+            return branches;
+        }
+
+        public List<Statement> getDefaultBranch() {
+            return defaultBranch;
+        }
     }
 
     public static class CaseBranch extends Statement {
@@ -168,6 +287,13 @@ public abstract class Statement {
             this.body = body;
         }
 
+        public Set<Integer> getRange() {
+            return range;
+        }
+
+        public List<Statement> getBody() {
+            return body;
+        }
     }
 
     public static class Assignment extends Statement {
@@ -177,6 +303,14 @@ public abstract class Statement {
         public Assignment(BasicExpression ident, BasicExpression expression) {
             this.ident = ident;
             this.expression = expression;
+        }
+
+        public BasicExpression getIdent() {
+            return ident;
+        }
+
+        public BasicExpression getExpression() {
+            return expression;
         }
     }
 
@@ -188,6 +322,19 @@ public abstract class Statement {
             this.procedureName = procedureName;
             this.arguments = arguments;
         }
+
+        public Token getProcedureName() {
+            return procedureName;
+        }
+
+        public List<BasicExpression> getArguments() {
+            return arguments;
+        }
+
+        public Call setArguments(List<BasicExpression> arguments) {
+            this.arguments = arguments;
+            return this;
+        }
     }
 
     public static class Const extends Statement {
@@ -197,6 +344,14 @@ public abstract class Statement {
         public Const(Token name, BasicExpression initializer) {
             this.name = name;
             this.initializer = initializer;
+        }
+
+        public Token getName() {
+            return name;
+        }
+
+        public BasicExpression getInitializer() {
+            return initializer;
         }
     }
 
@@ -208,6 +363,14 @@ public abstract class Statement {
             this.ident = ident;
             this.arrayIndex = arrayIndex;
         }
+
+        public Token getIdent() {
+            return ident;
+        }
+
+        public BasicExpression getArrayIndex() {
+            return arrayIndex;
+        }
     }
 
     public static class Write extends Statement {
@@ -218,6 +381,14 @@ public abstract class Statement {
             this.ident = ident;
             this.arrayIndex = arrayIndex;
         }
+
+        public Token getIdent() {
+            return ident;
+        }
+
+        public BasicExpression getArrayIndex() {
+            return arrayIndex;
+        }
     }
 
     public static class Main extends Statement {
@@ -225,6 +396,10 @@ public abstract class Statement {
 
         public Main(List<Statement> body) {
             this.body = body;
+        }
+
+        public List<Statement> getBody() {
+            return body;
         }
     }
 

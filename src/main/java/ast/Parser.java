@@ -1,10 +1,7 @@
-package structure;
+package ast;
 
-import ast.BasicExpression;
-import ast.Statement;
 import exception.IllegalTokenException;
 import interpreter.Interpreter;
-import scanner.Scanner;
 import scanner.Token;
 import scanner.TokenType;
 
@@ -12,52 +9,32 @@ import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-public class Program {
+public class Parser {
 
     private static final String CONST = "CONST";
     private static final String VAR = "VAR";
     private static final String ILLEGAL_TOKEN_ERROR_MESSAGE = "Illegal token (%s) during %s reading, line: %d";
     private static final List<TokenType> BOOLEAN_OPERATION_TYPE_LIST = Arrays.asList(TokenType.GREATER,
-                                                                                     TokenType.LESS,
-                                                                                     TokenType.GREATER_EQUAL,
-                                                                                     TokenType.LESS_EQUAL,
-                                                                                     TokenType.EQUAL,
-                                                                                     TokenType.BOOLEAN_EQUAL,
-                                                                                     TokenType.NOT_EQUAL,
-                                                                                     TokenType.NOT,
-                                                                                     TokenType.AND,
-                                                                                     TokenType.OR);
+        TokenType.LESS,
+        TokenType.GREATER_EQUAL,
+        TokenType.LESS_EQUAL,
+        TokenType.EQUAL,
+        TokenType.BOOLEAN_EQUAL,
+        TokenType.NOT_EQUAL,
+        TokenType.NOT,
+        TokenType.AND,
+        TokenType.OR);
 
     private static final List<TokenType> MATH_OPERATION_TYPE_LIST = Arrays.asList(TokenType.PLUS, TokenType.MINUS,
-                                                                                  TokenType.STAR, TokenType.SLASH,
-                                                                                  TokenType.DIV, TokenType.MOD);
-    private final List<Token> tokenList;
+        TokenType.STAR, TokenType.SLASH,
+        TokenType.DIV, TokenType.MOD);
 
-    private final List<Statement> statementList;
+    private final List<Token> tokenList;
     private int tokenIndex;
 
-    private Program(String source) {
-        this.statementList = new LinkedList<>();
-        this.tokenList = Scanner.getTokens(source);
+    public Parser(List<Token> tokenList) {
+        this.tokenList = tokenList;
         this.tokenIndex = 0;
-    }
-
-    public static Program readBlock(String source) {
-        Program program = new Program(source);
-        List<Statement> statements = program.statementList;
-        statements.add(program.readModule());
-        statements.add(program.readImports());
-        statements.addAll(program.readConst());
-        List<Statement.Var> vars = new ArrayList<>();
-        List<Statement.VarArray> varArrays = new ArrayList<>();
-        program.readVar(vars, varArrays);
-        statements.addAll(vars);
-        statements.addAll(varArrays);
-        List<Statement.Procedure> procedures = new ArrayList<>();
-        program.readProcedures(procedures);
-        statements.addAll(procedures);
-        statements.add(program.readMain());
-        return program;
     }
 
     public Statement.Module readModule() {
@@ -350,7 +327,7 @@ public class Program {
         return new Statement.Return(expression);
     }
 
-    private Statement readMain() {
+    public Statement readMain() {
         List<Statement> body = new ArrayList<>();
         List<Statement.Var> vars = new ArrayList<>();
         List<Statement.VarArray> varArrays = new ArrayList<>();
@@ -389,7 +366,7 @@ public class Program {
             case BEGIN -> readMain();
             default -> throw new IllegalTokenException(
                 String.format("Illegal token (%s) during Statement reading, line: %d ",
-                              token.type(), token.line()));
+                    token.type(), token.line()));
         };
     }
 
@@ -402,8 +379,8 @@ public class Program {
         BasicExpression condition = readExpression(new BasicExpression.Literal(currentToken));
 
         while (!TokenType.ELSIF.equals(tokenList.get(tokenIndex).type()) &&
-               !TokenType.ELSE.equals(tokenList.get(tokenIndex).type()) &&
-               !TokenType.END.equals(tokenList.get(tokenIndex).type())) {
+            !TokenType.ELSE.equals(tokenList.get(tokenIndex).type()) &&
+            !TokenType.END.equals(tokenList.get(tokenIndex).type())) {
             body.add(readStatement());
         }
 
@@ -414,8 +391,8 @@ public class Program {
             List<Statement> elsifBody = new ArrayList<>();
 
             while (!TokenType.ELSIF.equals(tokenList.get(tokenIndex).type()) &&
-                   !TokenType.ELSE.equals(tokenList.get(tokenIndex).type()) &&
-                   !TokenType.END.equals(tokenList.get(tokenIndex).type())) {
+                !TokenType.ELSE.equals(tokenList.get(tokenIndex).type()) &&
+                !TokenType.END.equals(tokenList.get(tokenIndex).type())) {
                 elsifBody.add(readStatement());
             }
 
@@ -466,7 +443,7 @@ public class Program {
         }
 
         while (!TokenType.ELSE.equals(tokenList.get(tokenIndex).type()) &&
-               !TokenType.END.equals(tokenList.get(tokenIndex).type())) {
+            !TokenType.END.equals(tokenList.get(tokenIndex).type())) {
             body.add(readCaseBranch());
             if (TokenType.PIPE.equals(tokenList.get(tokenIndex).type())) {
                 peekToken();
@@ -496,7 +473,7 @@ public class Program {
         Set<Integer> range = readCaseBranchRange();
 
         while (!TokenType.PIPE.equals(tokenList.get(tokenIndex).type()) &&
-               !TokenType.ELSE.equals(tokenList.get(tokenIndex).type())) {
+            !TokenType.ELSE.equals(tokenList.get(tokenIndex).type())) {
             body.add(readStatement());
         }
 
@@ -507,7 +484,7 @@ public class Program {
         return new Statement.CaseBranch(range, body);
     }
 
-    private Set<Integer> readCaseBranchRange() {
+    public Set<Integer> readCaseBranchRange() {
         Set<Integer> range = new HashSet<>();
         Token currentToken = peekToken();
         while (!TokenType.COLON.equals(currentToken.type())) {
@@ -571,7 +548,7 @@ public class Program {
         return new Statement.For(index, toExpression, byExpression, body);
     }
 
-    private Statement readAssignmentOrCallStatement() {
+    public Statement readAssignmentOrCallStatement() {
         Token currentToken = tokenList.get(tokenIndex);
         Token ident;
         BasicExpression expression = null;
@@ -753,7 +730,7 @@ public class Program {
                 expression = new BasicExpression.Binary(expression, operator,
                     new BasicExpression.Grouping(groupExpression));
             } else if (TokenType.IDENT.equals(currentToken.type()) &&
-                      TokenType.OPEN_PARENTHESIS.equals(tokenList.get(tokenIndex).type())) {
+                TokenType.OPEN_PARENTHESIS.equals(tokenList.get(tokenIndex).type())) {
                 Token ident = currentToken;
                 List<BasicExpression> argumentExpressions = new ArrayList<>();
                 peekToken();
@@ -766,7 +743,7 @@ public class Program {
                 }
                 currentToken = peekToken();
                 expression = new BasicExpression.Binary(expression, operator,
-                                                        new BasicExpression.ProcedureCall(ident, argumentExpressions));
+                    new BasicExpression.ProcedureCall(ident, argumentExpressions));
             } else {
                 currentToken = peekToken();
                 BasicExpression rightExpression;
@@ -788,13 +765,6 @@ public class Program {
         return expression;
     }
 
-    private BasicExpression readGroupedExpression(Token currentToken, BasicExpression groupExpression) {
-        Token groupedOperator = currentToken;
-        currentToken = peekToken();
-        BasicExpression groupedRight = new BasicExpression.Literal(currentToken);
-        return new BasicExpression.Binary(groupExpression, groupedOperator, groupedRight);
-    }
-
     private Statement.Read readReadStatement() {
         peekToken();
         Token currentToken = peekToken();
@@ -810,7 +780,7 @@ public class Program {
         return statement;
     }
 
-    private Statement.Write readWriteStatement() {
+    public Statement.Write readWriteStatement() {
         peekToken();
         Token currentToken = peekToken();
         Token variableName = currentToken;
@@ -839,15 +809,12 @@ public class Program {
         return token;
     }
 
-    public List<Statement> getStatementList() {
-        return statementList;
-    }
-
-    public List<Token> getTokenList() {
+    private List<Token> getTokenList() {
         return tokenList;
     }
 
-    public int getTokenIndex() {
+    private int getTokenIndex() {
         return tokenIndex;
     }
+
 }

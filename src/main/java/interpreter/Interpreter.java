@@ -2,7 +2,7 @@ package interpreter;
 
 import scanner.Scanner;
 import scanner.Token;
-import structure.Program;
+import structure.Block;
 
 import java.io.IOException;
 import java.nio.charset.Charset;
@@ -29,8 +29,8 @@ public class Interpreter {
     private static void run(String source) {
         Scanner scanner = new Scanner(source);
 
-        Program program = Program.readBlock(source);
-        program.getStatementList().forEach(System.out::println);
+        Block block = Block.readBlock(source);
+        block.getStatementList().forEach(System.out::println);
         List<Token> tokens = scanner.scanTokens();
 
         // For now, just print the tokens.

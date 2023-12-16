@@ -61,8 +61,8 @@ public class ApplicationContext {
         Map<String, List<Statement>> procedureList =
             statements.stream()
                 .filter(statement -> statement instanceof Statement.Procedure)
-                .collect(Collectors.toMap(statement -> ((Statement.Procedure) statement).name.lexeme(),
-                                          statement -> ((Statement.Procedure) statement).body));
+                .collect(Collectors.toMap(statement -> ((Statement.Procedure) statement).getName().lexeme(),
+                                          statement -> ((Statement.Procedure) statement).getBody()));
 
         return new ApplicationContext(null, null, varList, varArrayList, constList, procedureList);
     }
