@@ -206,8 +206,7 @@ public class Parser {
                     currentToken = peekToken();
                 } catch (NumberFormatException e) {
                     Interpreter.error(currentToken.line(), "Invalid array size", e.getMessage());
-                    throw new IllegalTokenException(String.format(ILLEGAL_TOKEN_ERROR_MESSAGE,
-                        currentToken.type(), "VarArray declaration", currentToken.line()));
+                    System.exit(1);
                 }
             } else {
                 Token type = currentToken;
@@ -238,7 +237,6 @@ public class Parser {
                 throw new IllegalTokenException(String.format("Illegal token (%s) during ast.Statement reading, line: %d }",
                     currentToken.type(), currentToken.line()));
             }
-            currentToken = peekToken();
 
             if (TokenType.OPEN_PARENTHESIS.equals(currentToken.type())) {
                 while (!TokenType.CLOSE_PARENTHESIS.equals(currentToken.type())) {
@@ -283,12 +281,14 @@ public class Parser {
                 currentToken = tokenList.get(tokenIndex);
             }
 
-            while (TokenType.PROCEDURE.equals(currentToken.type())) {
-                List<Statement.Procedure> subProcedures = new ArrayList<>();
+            currentToken = peekToken();
+
+
+            List<Statement.Procedure> subProcedures = new ArrayList<>();
+            while (TokenType.PROCEDURE.equals(tokenList.get(tokenIndex).type())) {
                 readProcedures(subProcedures);
-                body.addAll(subProcedures);
-                currentToken = peekToken();
             }
+            body.addAll(subProcedures);
 
             while (!TokenType.END.equals(currentToken.type())) {
                 if (TokenType.SEMICOLON.equals(tokenList.get(tokenIndex).type())) {
@@ -494,7 +494,7 @@ public class Parser {
                 currentToken = peekToken();
                 if (!TokenType.DOT.equals(currentToken.type())) {
                     Interpreter.error(currentToken.line(), "Invalid CASE condition", "Expected '..' token");
-                    throw new IllegalTokenException("Invalid CASE condition");
+                    System.exit(1);
                 }
                 int rangeEnd = ((Double) peekToken().literal()).intValue();
 

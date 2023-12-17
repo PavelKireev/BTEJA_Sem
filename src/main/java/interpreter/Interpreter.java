@@ -1,5 +1,8 @@
 package interpreter;
 
+import ast.Statement;
+import context.ApplicationContext;
+import executor.MainStatementExecutor;
 import scanner.Scanner;
 import scanner.Token;
 import structure.Block;
@@ -9,6 +12,7 @@ import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.List;
+import java.util.Objects;
 
 public class Interpreter {
 
@@ -30,13 +34,21 @@ public class Interpreter {
         Scanner scanner = new Scanner(source);
 
         Block block = Block.readBlock(source);
-        block.getStatementList().forEach(System.out::println);
-        List<Token> tokens = scanner.scanTokens();
+        ApplicationContext.initialize(block.getStatementList());
+
+        MainStatementExecutor mainStatementExecutor = new MainStatementExecutor();
+        mainStatementExecutor.execute(
+            (Statement.Main) Objects.requireNonNull(block.getStatementList()
+                                                         .stream()
+                                                         .filter(statement -> statement instanceof Statement.Main)
+                                                         .findFirst()
+                                                         .orElse(null))
+        );
 
         // For now, just print the tokens.
-        for (Token token : tokens) {
-            System.out.println(token);
-        }
+//        for (Statement statement : block.getStatementList()) {
+//            System.out.println(statement);
+//        }
     }
 
     private static void runFile(String path) throws IOException {

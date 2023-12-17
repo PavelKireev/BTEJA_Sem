@@ -3,35 +3,31 @@ package context;
 import ast.BasicExpression;
 import ast.Statement;
 
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class ApplicationContext {
 
-    private final String moduleName;
-    private final List<String> imports;
-    private final Map<String, BasicExpression> globalVariableList;
-    private final Map<String, BasicExpression> globalVariableArrayList;
-    private final Map<String, BasicExpression> globalConstantList;
-    private final Map<String, List<Statement>> procedureList;
+    public static String moduleName = "";
+    public static final List<String> imports = new ArrayList<>();
+    public static final List<Statement> mainProcudure = new ArrayList<>();
+    public static final Map<String, BasicExpression> globalVariableList = new HashMap<>();
+    public static final Map<String, BasicExpression> globalVariableArrayList = new HashMap<>();
+    public static final Map<String, BasicExpression> globalConstantList = new HashMap<>();
+    public static final Map<String, List<Statement>> globalProcedureList = new HashMap<>();
 
-    public ApplicationContext(String moduleName,
-                              List<String> imports,
-                              Map<String, BasicExpression> globalVariableList,
-                              Map<String, BasicExpression> globalVariableArrayList,
-                              Map<String, BasicExpression> globalConstantList,
-                              Map<String, List<Statement>> procedureList) {
-        this.moduleName = moduleName;
-        this.imports = imports;
-        this.globalVariableList = globalVariableList;
-        this.globalVariableArrayList = globalVariableArrayList;
-        this.globalConstantList = globalConstantList;
-        this.procedureList = procedureList;
-    }
+    public static void initialize(List<Statement> statements) {
+        String extractedModuleName = statements.stream()
+                                      .filter(statement -> statement instanceof Statement.Module)
+                                      .map(statement -> ((Statement.Module) statement).getName().lexeme())
+                                      .findFirst()
+                                      .orElse(null);
 
-    public static ApplicationContext initialize(List<Statement> statements) {
+        List<String> extractedImports = statements.stream()
+                                         .filter(statement -> statement instanceof Statement.Import)
+                                         .flatMap(statement -> ((Statement.Import) statement).getImports().stream())
+                                         .toList();
+
         Map<String, BasicExpression> constList =
             statements.stream()
                       .filter(statement -> statement instanceof Statement.Const)
@@ -58,13 +54,27 @@ public class ApplicationContext {
                                               return ((Statement.VarArray) statement).initializer;})
                       );
 
+        List<Statement> extractedMainProcedure =
+            statements.stream()
+                      .filter(statement -> statement instanceof Statement.Main)
+                      .map(statement -> ((Statement.Main) statement).getBody())
+                      .findFirst()
+                      .orElse(Collections.emptyList());
+
         Map<String, List<Statement>> procedureList =
             statements.stream()
                 .filter(statement -> statement instanceof Statement.Procedure)
                 .collect(Collectors.toMap(statement -> ((Statement.Procedure) statement).getName().lexeme(),
                                           statement -> ((Statement.Procedure) statement).getBody()));
 
-        return new ApplicationContext(null, null, varList, varArrayList, constList, procedureList);
+        moduleName = extractedModuleName;
+        imports.addAll(extractedImports);
+        globalVariableList.putAll(varList);
+        globalVariableArrayList.putAll(varArrayList);
+        globalConstantList.putAll(constList);
+        mainProcudure.addAll(extractedMainProcedure);
+        globalProcedureList.putAll(procedureList);
+
     }
 
     public void setVariableValue(String key, BasicExpression value) {
@@ -73,16 +83,16 @@ public class ApplicationContext {
         }
     }
 
-    public BasicExpression getConstant(String key) {
+    public static BasicExpression getConstant(String key) {
         return globalConstantList.getOrDefault(key, null);
     }
 
-    public BasicExpression getVariable(String key) {
+    public static BasicExpression getVariable(String key) {
         return globalVariableList.getOrDefault(key, null);
     }
 
     public List<Statement> getProcedure(String key) {
-        return procedureList.getOrDefault(key, Collections.emptyList());
+        return globalProcedureList.getOrDefault(key, Collections.emptyList());
     }
 
 }

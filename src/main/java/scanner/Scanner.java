@@ -56,6 +56,7 @@ public class Scanner {
                     advance();
                     if (advance() != ')') {
                         Interpreter.error(line, "", "Unterminated comment.");
+                        System.exit(1);
                     }
 
                 } else {
@@ -150,6 +151,7 @@ public class Scanner {
                     identifier();
                 } else {
                     Interpreter.error(line, "","Unexpected character.");
+                    System.exit(1);
                 }
                 break;
         }
@@ -209,6 +211,7 @@ public class Scanner {
 
         if (isAtEnd()) {
             Interpreter.error(line, "", "Unterminated string.");
+            System.exit(1);
             return;
         }
 
