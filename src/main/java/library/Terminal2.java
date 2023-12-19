@@ -8,11 +8,11 @@ public class Terminal2 {
                                                                    "WriteChar", "WriteCard", "WriteReal");
 
     public static void WriteString(String text) {
-        System.out.print(text);
+        System.out.print(text.replace("\"", ""));
     }
 
-    public static void WriteInt(int number) {
-        System.out.print(number);
+    public static void WriteInt(int number, int spaces) {
+        System.out.print(number + " ".repeat(spaces));
     }
 
     public static void WriteLn() {
@@ -23,14 +23,14 @@ public class Terminal2 {
         System.out.print(character);
     }
 
-    public static void WriteCard(int number) {
+    public static void WriteCard(int number, int spaces) {
         if (number < 0) {
             number = Integer.MAX_VALUE + number + 1;
         }
-        System.out.print(number);
+        System.out.print(number + " ".repeat(spaces));
     }
 
-    public static void WriteReal(double number) {
-        System.out.print(number);
+    public static void WriteReal(double number, int spaces) {
+        System.out.print(number + " ".repeat(spaces));
     }
 }

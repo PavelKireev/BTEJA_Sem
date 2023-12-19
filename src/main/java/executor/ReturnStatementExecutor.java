@@ -1,10 +1,11 @@
 package executor;
 
 import ast.Statement;
+import context.ProcedureContext;
 
 public class ReturnStatementExecutor implements Executor<Statement.Return> {
     @Override
-    public void execute(Statement.Return statement) {
-        throw new UnsupportedOperationException("Not supported yet.");
+    public void execute(Statement.Return statement, ProcedureContext procedureContext) {
+        return;
     }
 }

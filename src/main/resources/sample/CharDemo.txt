@@ -24,7 +24,6 @@ BEGIN
    WriteChar(Cat4);
    WriteLn;
 
-   Char1 := 65C;                       (* This sets Char1 to 'A' *)
    Char1 := 'a';                       (* This sets Char1 to 'a' *)
    Char2 := CAP(Char1);                (* This sets Char2 to 'A' *)
 

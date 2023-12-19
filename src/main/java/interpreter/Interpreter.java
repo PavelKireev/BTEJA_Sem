@@ -3,15 +3,12 @@ package interpreter;
 import ast.Statement;
 import context.ApplicationContext;
 import executor.MainStatementExecutor;
-import scanner.Scanner;
-import scanner.Token;
 import structure.Block;
 
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.List;
 import java.util.Objects;
 
 public class Interpreter {
@@ -19,9 +16,9 @@ public class Interpreter {
     static boolean hadError = false;
 
     public static void main(String[] args) {
-        System.out.println("Usage: PL/0 [script]");
-        java.util.Scanner scanner = new java.util.Scanner(System.in);
+        System.out.println("Modula-2 Interpreter");
         System.out.print("Enter path to file: ");
+        java.util.Scanner scanner = new java.util.Scanner(System.in);
         String path = scanner.nextLine();
         try {
             runFile(path);
@@ -31,8 +28,6 @@ public class Interpreter {
     }
 
     private static void run(String source) {
-        Scanner scanner = new Scanner(source);
-
         Block block = Block.readBlock(source);
         ApplicationContext.initialize(block.getStatementList());
 
@@ -42,13 +37,11 @@ public class Interpreter {
                                                          .stream()
                                                          .filter(statement -> statement instanceof Statement.Main)
                                                          .findFirst()
-                                                         .orElse(null))
+                                                         .orElse(null)), null
         );
-
-        // For now, just print the tokens.
-//        for (Statement statement : block.getStatementList()) {
-//            System.out.println(statement);
-//        }
+        System.out.println(ApplicationContext.globalVariableList);
+        System.out.println(ApplicationContext.globalVariableArrayList);
+        System.exit(0);
     }
 
     private static void runFile(String path) throws IOException {

@@ -15,19 +15,18 @@ public class Parser {
     private static final String VAR = "VAR";
     private static final String ILLEGAL_TOKEN_ERROR_MESSAGE = "Illegal token (%s) during %s reading, line: %d";
     private static final List<TokenType> BOOLEAN_OPERATION_TYPE_LIST = Arrays.asList(TokenType.GREATER,
-        TokenType.LESS,
-        TokenType.GREATER_EQUAL,
-        TokenType.LESS_EQUAL,
-        TokenType.EQUAL,
-        TokenType.BOOLEAN_EQUAL,
-        TokenType.NOT_EQUAL,
-        TokenType.NOT,
-        TokenType.AND,
-        TokenType.OR);
+                                                                                     TokenType.LESS,
+                                                                                     TokenType.GREATER_EQUAL,
+                                                                                     TokenType.LESS_EQUAL,
+                                                                                     TokenType.EQUAL,
+                                                                                     TokenType.NOT_EQUAL,
+                                                                                     TokenType.NOT,
+                                                                                     TokenType.AND,
+                                                                                     TokenType.OR);
 
     private static final List<TokenType> MATH_OPERATION_TYPE_LIST = Arrays.asList(TokenType.PLUS, TokenType.MINUS,
-        TokenType.STAR, TokenType.SLASH,
-        TokenType.DIV, TokenType.MOD);
+                                                                                  TokenType.STAR, TokenType.SLASH,
+                                                                                  TokenType.DIV, TokenType.MOD);
 
     private final List<Token> tokenList;
     private int tokenIndex;
@@ -232,7 +231,9 @@ public class Parser {
             List<Statement.VarArray> varArrays = new ArrayList<>();
 
             if (TokenType.PROCEDURE.equals(currentToken.type())) {
-                name = peekToken();
+                currentToken = peekToken();
+                name = currentToken;
+                currentToken = peekToken();
             } else {
                 throw new IllegalTokenException(String.format("Illegal token (%s) during ast.Statement reading, line: %d }",
                     currentToken.type(), currentToken.line()));
@@ -674,14 +675,26 @@ public class Parser {
         if (expression instanceof BasicExpression.Literal &&
             TokenType.OPEN_PARENTHESIS.equals(((BasicExpression.Literal) expression).value.type())) {
             Token currentToken = peekToken();
-            BasicExpression groupExpression = new BasicExpression.Literal(currentToken);
+            BasicExpression groupExpression = null;
+            if (TokenType.MINUS.equals(currentToken.type())) {
+                currentToken = peekToken();
+                groupExpression = new BasicExpression.Negation(new BasicExpression.Literal(currentToken));
+            } else {
+                groupExpression = new BasicExpression.Literal(currentToken);
+            }
             currentToken = peekToken();
             while (!TokenType.CLOSE_PARENTHESIS.equals(currentToken.type()) && (
                 MATH_OPERATION_TYPE_LIST.contains(currentToken.type()) ||
                     BOOLEAN_OPERATION_TYPE_LIST.contains(currentToken.type()))) {
                 Token groupedOperator = currentToken;
+                BasicExpression groupedRight = null;
                 currentToken = peekToken();
-                BasicExpression groupedRight = new BasicExpression.Literal(currentToken);
+                if (TokenType.MINUS.equals(currentToken.type())) {
+                    currentToken = peekToken();
+                    groupedRight = new BasicExpression.Negation(new BasicExpression.Literal(currentToken));
+                } else {
+                    groupedRight = new BasicExpression.Literal(currentToken);
+                }
                 groupExpression = new BasicExpression.Binary(groupExpression, groupedOperator, groupedRight);
                 if (MATH_OPERATION_TYPE_LIST.contains(tokenList.get(tokenIndex).type()) ||
                     BOOLEAN_OPERATION_TYPE_LIST.contains(tokenList.get(tokenIndex).type())) {
@@ -713,15 +726,27 @@ public class Parser {
 
             if (TokenType.OPEN_PARENTHESIS.equals(currentToken.type())) {
                 currentToken = peekToken();
-                BasicExpression groupExpression = new BasicExpression.Literal(currentToken);
+                BasicExpression groupExpression = null;
+                if (TokenType.MINUS.equals(currentToken.type())) {
+                    currentToken = peekToken();
+                    groupExpression = new BasicExpression.Negation(new BasicExpression.Literal(currentToken));
+                } else {
+                    groupExpression = new BasicExpression.Literal(currentToken);
+                }
                 currentToken = peekToken();
                 while (!TokenType.CLOSE_PARENTHESIS.equals(currentToken.type()) &&
                     (MATH_OPERATION_TYPE_LIST.contains(currentToken.type()) ||
                         BOOLEAN_OPERATION_TYPE_LIST.contains(currentToken.type()))) {
                     Token groupedOperator = currentToken;
                     currentToken = peekToken();
-                    BasicExpression groupedRight = new BasicExpression.Literal(currentToken);
-                    groupExpression = new BasicExpression.Binary(groupExpression, groupedOperator, groupedRight);
+                    if (TokenType.MINUS.equals(currentToken.type())) {
+                        currentToken = peekToken();
+                        BasicExpression groupedRight = new BasicExpression.Negation(new BasicExpression.Literal(currentToken));
+                        groupExpression = new BasicExpression.Binary(groupExpression, groupedOperator, groupedRight);
+                    } else {
+                        BasicExpression groupedRight = new BasicExpression.Literal(currentToken);
+                        groupExpression = new BasicExpression.Binary(groupExpression, groupedOperator, groupedRight);
+                    }
                     if (MATH_OPERATION_TYPE_LIST.contains(tokenList.get(tokenIndex).type())) {
                         currentToken = peekToken();
                     }

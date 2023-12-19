@@ -3,6 +3,7 @@ package executor;
 import ast.BasicExpression;
 import ast.Statement;
 import context.ApplicationContext;
+import context.ProcedureContext;
 import evaluator.ExpressionEvaluator;
 import interpreter.Interpreter;
 import library.Native;
@@ -13,14 +14,40 @@ import java.util.Objects;
 
 public class CallStatementExecutor implements Executor<Statement.Call> {
     @Override
-    public void execute(Statement.Call statement) {
+    public void execute(Statement.Call statement, ProcedureContext procedureContext) {
         String procedureName = statement.getProcedureName().lexeme();
-        if (Native.supportedProcedures.contains(procedureName)) {
+        if (ApplicationContext.imports.contains(procedureName)) {
+            executeTerminal2Procedure(statement, procedureContext);
+        } else if (Native.supportedProcedures.contains(procedureName)) {
+            BasicExpression.ProcedureCall procedureCall = new BasicExpression.ProcedureCall(
+                statement.getProcedureName(),
+                statement.getArguments()
+            );
+            ApplicationContext.updateVariable(procedureName,
+                                              Native.executeNativeProcedure(procedureCall, procedureContext));
+        } else if (ApplicationContext.globalProcedureList
+                                     .get(procedureName) != null) {
+            ProcedureContext innerProcedureContext =
+                ProcedureContext.initialize(ApplicationContext.globalProcedureList
+                                                              .get(procedureName));
+            if (procedureContext == null) {
+                procedureContext = innerProcedureContext;
+            }
 
-        } else if (ApplicationContext.imports.contains(procedureName)) {
-            executeTerminal2Procedure(statement);
-        } else if (ApplicationContext.globalProcedureList.get(procedureName) != null) {
-            ApplicationContext.globalProcedureList.get(procedureName).forEach(StatementExecutor::execute);
+            procedureContext.addProcedureContext(procedureName, innerProcedureContext);
+            procedureContext.getProcedureContexts().putAll(innerProcedureContext.getProcedureContexts());
+            ProcedureContext finalProcedureContext = procedureContext;
+            ApplicationContext.globalProcedureList
+                              .get(procedureName)
+                              .forEach(procedureStatement ->
+                                  StatementExecutor.execute(procedureStatement, finalProcedureContext));
+        } else if (procedureContext != null && procedureContext.getProcedureContext(procedureName) != null) {
+            ProcedureContext innerProcedureContext = procedureContext.getProcedureContext(procedureName);
+            procedureContext.addProcedureContext(procedureName, innerProcedureContext);
+            procedureContext.getProcedureContexts().putAll(innerProcedureContext.getProcedureContexts());
+            ProcedureContext finalProcedureContext1 = procedureContext;
+            procedureContext.getProcedureContext(procedureName).getStatements().forEach(procedureStatement ->
+                StatementExecutor.execute(procedureStatement, finalProcedureContext1));
         } else {
             Interpreter.error(statement.getProcedureName().line(),
                 " at '" + statement.getProcedureName().lexeme() + "'",
@@ -29,62 +56,40 @@ public class CallStatementExecutor implements Executor<Statement.Call> {
         }
     }
 
-    private void executeNativeProcedure(Statement.Call statement) {
+    private void executeTerminal2Procedure(Statement.Call statement, ProcedureContext procedureContext) {
         String procedureName = statement.getProcedureName().lexeme();
-        List<String> arguments = statement.getArguments().stream().map(Objects::toString).toList();
-        switch (procedureName) {
-            case "CHR":
-                char character = Native.CHR(Integer.parseInt(arguments.get(0)));
-                break;
-            case "FLOAT":
-                break;
-            case "TRUNC":
-                break;
-            case "ORD":
-                break;
-            case "CAP":
-                break;
-            case "VAL":
-                break;
-            case "INC":
-                break;
-            case "DEC":
-                break;
-            case "MIN":
-                break;
-            case "MAX":
-                break;
-            default:
-                break;
-
-        }
-    }
-
-    private void executeTerminal2Procedure(Statement.Call statement) {
-        String procedureName = statement.getProcedureName().lexeme();
-        List<String> arguments = statement.getArguments().stream().map(expression -> ((BasicExpression.Literal) expression).value.lexeme()).toList();
+        List<Object> arguments = statement.getArguments()
+                                          .stream()
+                                          .map(expression ->
+                                              ExpressionEvaluator.evaluate(expression, procedureContext))
+                                          .toList();
         switch (procedureName) {
             case "WriteString":
-                Terminal2.WriteString(arguments.get(0));
+                Terminal2.WriteString((String) arguments.get(0));
                 break;
             case "WriteInt":
                 try {
-                    Terminal2.WriteInt(Integer.parseInt(arguments.get(0)));
+                    Terminal2.WriteInt((Integer) arguments.get(0), arguments.get(1) != null ? (Integer) arguments.get(1)
+                                                                                            : 0);
                 } catch (Exception e) {
-                    Terminal2.WriteInt(0);
+                    Interpreter.error(statement.getProcedureName().line(),
+                        " at '" + statement.getProcedureName().lexeme() + "'",
+                        "Incompatible types");
                 }
                 break;
             case "WriteLn":
                 Terminal2.WriteLn();
                 break;
             case "WriteChar":
-                Terminal2.WriteChar(arguments.get(0).charAt(0));
+                Terminal2.WriteChar(String.valueOf(arguments.get(0)).charAt(0));
                 break;
             case "WriteCard":
-                Terminal2.WriteCard(Integer.parseInt(arguments.get(0)));
+                Terminal2.WriteCard((Integer) arguments.get(0), arguments.get(1) != null ? (Integer) arguments.get(1)
+                                                                                         : 0);
                 break;
             case "WriteReal":
-                Terminal2.WriteReal(Double.parseDouble(arguments.get(0)));
+                Terminal2.WriteReal((Double) arguments.get(0), arguments.get(1) != null ? (Integer) arguments.get(1)
+                                                                                        : 0);
                 break;
             default:
                 break;

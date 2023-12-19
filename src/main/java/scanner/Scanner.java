@@ -115,7 +115,7 @@ public class Scanner {
                 addToken(match('=') ? TokenType.GREATER_EQUAL : TokenType.GREATER);
                 break;
             case '#':
-                addToken(TokenType.BOOLEAN_EQUAL);
+                addToken(TokenType.NOT_EQUAL);
                 break;
             case '/':
                 if (match('/')) {
@@ -140,8 +140,8 @@ public class Scanner {
                 string();
                 break;
             case '\'':
-                addToken(TokenType.CHAR, peek());
                 advance();
+                addToken(TokenType.CHAR, peek());
                 advance();
                 break;
             default:

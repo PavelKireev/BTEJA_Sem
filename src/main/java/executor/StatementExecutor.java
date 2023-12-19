@@ -1,6 +1,7 @@
 package executor;
 
 import ast.Statement;
+import context.ProcedureContext;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -28,7 +29,7 @@ public class StatementExecutor {
         executorMap.put(Statement.Return.class.getName(), new ReturnStatementExecutor());
     }
 
-    public static <T extends Statement> void execute(T statement) {
-        executorMap.get(statement.getClass().getName()).execute(statement);
+    public static <T extends Statement> void execute(T statement, ProcedureContext procedureContext) {
+        executorMap.get(statement.getClass().getName()).execute(statement, procedureContext);
     }
 }

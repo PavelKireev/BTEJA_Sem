@@ -36,21 +36,17 @@ public abstract class BasicExpression {
         public final Token value;
     }
 
-    public static class Numeric extends BasicExpression {
-        public Numeric(Token value) {
-            this.value = value;
-        }
-
-        final Token value;
-    }
-
     public static class Negation extends BasicExpression {
 
         public Negation(BasicExpression negatedValue) {
             this.negatedValue = negatedValue;
         }
 
-        final BasicExpression negatedValue;
+        private final BasicExpression negatedValue;
+
+        public BasicExpression getNegatedValue() {
+            return negatedValue;
+        }
     }
 
     public static class ArrayVariable extends BasicExpression {

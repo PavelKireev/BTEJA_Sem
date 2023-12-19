@@ -2,6 +2,7 @@ package context;
 
 import ast.BasicExpression;
 import ast.Statement;
+import evaluator.ExpressionEvaluator;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -11,9 +12,9 @@ public class ApplicationContext {
     public static String moduleName = "";
     public static final List<String> imports = new ArrayList<>();
     public static final List<Statement> mainProcudure = new ArrayList<>();
-    public static final Map<String, BasicExpression> globalVariableList = new HashMap<>();
-    public static final Map<String, BasicExpression> globalVariableArrayList = new HashMap<>();
-    public static final Map<String, BasicExpression> globalConstantList = new HashMap<>();
+    public static final Map<String, Object> globalVariableList = new HashMap<>();
+    public static final Map<String, Map<Integer, Object>> globalVariableArrayList = new HashMap<>();
+    public static final Map<String, Object> globalConstantList = new HashMap<>();
     public static final Map<String, List<Statement>> globalProcedureList = new HashMap<>();
 
     public static void initialize(List<Statement> statements) {
@@ -28,30 +29,28 @@ public class ApplicationContext {
                                          .flatMap(statement -> ((Statement.Import) statement).getImports().stream())
                                          .toList();
 
-        Map<String, BasicExpression> constList =
+        Map<String, Object> constList =
             statements.stream()
                       .filter(statement -> statement instanceof Statement.Const)
                       .collect(Collectors.toMap(statement -> ((Statement.Const) statement).name.lexeme(),
-                                                statement -> ((Statement.Const) statement).initializer));
-        Map<String, BasicExpression> varList =
+                                                statement -> ExpressionEvaluator.evaluate(
+                                                    ((Statement.Const) statement).initializer,
+                                                    null))
+                      );
+        Map<String, Object> varMap =
             statements.stream()
                       .filter(statement -> statement instanceof Statement.Var)
-                      .collect(
-                          Collectors.toMap(statement -> ((Statement.Var) statement).name.lexeme(),
-                                           statement -> {
-                                              if (((Statement.Var) statement).initializer == null)
-                                                  return new BasicExpression.Empty();
-                                              return ((Statement.Var) statement).initializer;})
+                      .collect(HashMap::new,
+                               (m, v) -> m.put(((Statement.Var) v).getName().lexeme(), null),
+                               HashMap::putAll
                       );
-        Map<String, BasicExpression> varArrayList =
+        Map<String, Map<Integer, Object>> varArrayMap =
             statements.stream()
                       .filter(statement -> statement instanceof Statement.VarArray)
                       .collect(
-                          Collectors.toMap(statement -> ((Statement.VarArray) statement).name.lexeme(),
-                                           statement -> {
-                                              if (((Statement.VarArray) statement).initializer == null)
-                                                  return new BasicExpression.Empty();
-                                              return ((Statement.VarArray) statement).initializer;})
+                          Collectors.toMap(
+                              statement -> ((Statement.VarArray) statement).name.lexeme(),
+                              statement -> new HashMap<>())
                       );
 
         List<Statement> extractedMainProcedure =
@@ -61,7 +60,7 @@ public class ApplicationContext {
                       .findFirst()
                       .orElse(Collections.emptyList());
 
-        Map<String, List<Statement>> procedureList =
+        Map<String, List<Statement>> procedureMap =
             statements.stream()
                 .filter(statement -> statement instanceof Statement.Procedure)
                 .collect(Collectors.toMap(statement -> ((Statement.Procedure) statement).getName().lexeme(),
@@ -69,11 +68,11 @@ public class ApplicationContext {
 
         moduleName = extractedModuleName;
         imports.addAll(extractedImports);
-        globalVariableList.putAll(varList);
-        globalVariableArrayList.putAll(varArrayList);
+        globalVariableList.putAll(varMap);
+        globalVariableArrayList.putAll(varArrayMap);
         globalConstantList.putAll(constList);
         mainProcudure.addAll(extractedMainProcedure);
-        globalProcedureList.putAll(procedureList);
+        globalProcedureList.putAll(procedureMap);
 
     }
 
@@ -83,16 +82,44 @@ public class ApplicationContext {
         }
     }
 
-    public static BasicExpression getConstant(String key) {
+    public static Object getConstant(String key) {
         return globalConstantList.getOrDefault(key, null);
     }
 
-    public static BasicExpression getVariable(String key) {
+    public static Object getVariable(String key) {
         return globalVariableList.getOrDefault(key, null);
     }
 
-    public List<Statement> getProcedure(String key) {
+    public static List<Statement> getProcedure(String key) {
         return globalProcedureList.getOrDefault(key, Collections.emptyList());
+    }
+
+    public static Object getArrayVariable(String key, int index) {
+        return globalVariableArrayList.getOrDefault(key, Collections.emptyMap())
+                                      .getOrDefault(index, null);
+    }
+
+    public static void setVariable(String key, Object value) {
+        globalVariableList.put(key, value);
+    }
+
+    public static void updateVariable(String key, Object value) {
+        if (globalVariableList.containsKey(key)) {
+            globalVariableList.replace(key, value);
+        }
+    }
+
+    public static boolean varExists(String key) {
+        return globalVariableList.containsKey(key);
+    }
+
+    public static boolean arrayExists(String key) {
+        return globalVariableArrayList.containsKey(key);
+    }
+
+    public static void setArrayVariable(String key, int index, Object value) {
+        globalVariableArrayList.getOrDefault(key, Collections.emptyMap())
+                               .put(index, value);
     }
 
 }
