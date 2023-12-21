@@ -20,6 +20,10 @@ public class LiteralExpressionEvaluator implements Evaluator<BasicExpression.Lit
             return ApplicationContext.getVariable(value);
         }
 
+        if (ApplicationContext.constantExists(value)) {
+            return ApplicationContext.getConst(value);
+        }
+
         if (procedureContext != null && procedureContext.getVariable(value) != null) {
             return procedureContext.getVariable(value);
         }

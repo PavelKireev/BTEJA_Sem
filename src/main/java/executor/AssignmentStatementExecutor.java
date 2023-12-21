@@ -13,9 +13,10 @@ public class AssignmentStatementExecutor implements Executor<Statement.Assignmen
         Object value = ExpressionEvaluator.evaluate(statement.getExpression(), procedureContext);
 
         if (statement.getIdent() instanceof BasicExpression.Literal) {
-            if (procedureContext == null) {
-                ApplicationContext.updateVariable(((BasicExpression.Literal) statement.getIdent()).value.lexeme(), value);
-            } else {
+
+            ApplicationContext.updateVariable(((BasicExpression.Literal) statement.getIdent()).value.lexeme(), value);
+
+            if (procedureContext != null) {
                 procedureContext.updateVariable(((BasicExpression.Literal) statement.getIdent()).value.lexeme(), value);
             }
             return;

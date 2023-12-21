@@ -1,5 +1,6 @@
 package ast;
 
+import context.ApplicationContext;
 import exception.IllegalTokenException;
 import interpreter.Interpreter;
 import scanner.Token;
@@ -139,6 +140,10 @@ public class Parser {
 
         }
 
+        if (TokenType.SEMICOLON.equals(tokenList.get(tokenIndex).type())) {
+            peekToken();
+        }
+
         return constList;
     }
 
@@ -151,7 +156,8 @@ public class Parser {
         peekToken();
         Token currentToken = peekToken();
 
-        while (!TokenType.BEGIN.equals(currentToken.type()) && !TokenType.PROCEDURE.equals(currentToken.type())) {
+        while (!TokenType.BEGIN.equals(currentToken.type()) &&
+               !TokenType.PROCEDURE.equals(tokenList.get(tokenIndex).type())) {
             if (!TokenType.IDENT.equals(currentToken.type())) {
                 throw new IllegalTokenException(String.format(ILLEGAL_TOKEN_ERROR_MESSAGE,
                     currentToken.type(), VAR, currentToken.line()));
@@ -214,7 +220,9 @@ public class Parser {
                     for (Token name : names) {
                         vars.add(new Statement.Var(name, type, null));
                     }
-                    currentToken = peekToken();
+                    if(!TokenType.PROCEDURE.equals(tokenList.get(tokenIndex).type())) {
+                        currentToken = peekToken();
+                    }
                 }
             }
         }
@@ -233,7 +241,9 @@ public class Parser {
             if (TokenType.PROCEDURE.equals(currentToken.type())) {
                 currentToken = peekToken();
                 name = currentToken;
-                currentToken = peekToken();
+                if (TokenType.OPEN_PARENTHESIS.equals(tokenList.get(tokenIndex).type())) {
+                    currentToken = peekToken();
+                }
             } else {
                 throw new IllegalTokenException(String.format("Illegal token (%s) during ast.Statement reading, line: %d }",
                     currentToken.type(), currentToken.line()));
@@ -282,7 +292,9 @@ public class Parser {
                 currentToken = tokenList.get(tokenIndex);
             }
 
-            currentToken = peekToken();
+            if (!TokenType.IDENT.equals(tokenList.get(tokenIndex).type())) {
+                currentToken = peekToken();
+            }
 
 
             List<Statement.Procedure> subProcedures = new ArrayList<>();

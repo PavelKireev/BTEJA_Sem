@@ -47,7 +47,7 @@ public class Native {
         return null;
     }
 
-    public static float FLOAT(Integer number) {
+    public static double FLOAT(Integer number) {
         return number.floatValue();
     }
 

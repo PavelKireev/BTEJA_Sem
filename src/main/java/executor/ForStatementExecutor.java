@@ -6,6 +6,8 @@ import context.ApplicationContext;
 import context.ProcedureContext;
 import evaluator.ExpressionEvaluator;
 import interpreter.Interpreter;
+import java.util.List;
+import java.util.stream.IntStream;
 
 public class ForStatementExecutor implements Executor<Statement.For> {
     @Override
@@ -45,8 +47,13 @@ public class ForStatementExecutor implements Executor<Statement.For> {
                                                                                               .lexeme();
 
         if (index instanceof Integer) {
+            List<Integer> range = IntStream.range(Integer.min((int) index, (int) to),
+                                                  Integer.max((int) index, (int) to) < 0 ? Integer.max((int) index, (int) to) - 1
+                                                                                         : Integer.max((int) index, (int) to) + 1)
+                                           .boxed()
+                                           .toList();
             for (int i = (int) index;
-                 i != (int) to;
+                 range.contains(i);
                  i += by != null ? (Integer) by : 1) {
                 for (Statement forStatement : statement.getBody()) {
                     ApplicationContext.updateVariable(ident, i);
@@ -62,17 +69,28 @@ public class ForStatementExecutor implements Executor<Statement.For> {
                  i += by != null ? (Double) by : 1.0) {
                 for (Statement forStatement : statement.getBody()) {
                     ApplicationContext.updateVariable(ident, i);
-                    procedureContext.updateVariable(ident, i);
+                    if (procedureContext != null) {
+                        procedureContext.updateVariable(ident, i);
+                    }
                     StatementExecutor.execute(forStatement, procedureContext);
                 }
             }
         } else if (index instanceof Character) {
-            for (char i = (char) index;
-                 to.equals(i);
-                 i += by != null ? (Character) by : 1) {
+            index = (int)((Character) index);
+            to = (int)((Character) to);
+            List<Integer> range = IntStream.range((int) index, (int) to > 0 ? (int) to + 1 : (int) to - 1)
+                                           .boxed()
+                                           .toList();
+
+            for (int i = (int) index;
+                 range.contains(i);
+                 i += (by != null ? (int) by : 1)) {
                 for (Statement forStatement : statement.getBody()) {
                     ApplicationContext.updateVariable(ident, i);
-                    procedureContext.updateVariable(ident, i);
+                    if (procedureContext != null) {
+                        procedureContext.updateVariable(ident, i);
+                    }
+                    i = (char) i;
                     StatementExecutor.execute(forStatement, procedureContext);
                 }
             }

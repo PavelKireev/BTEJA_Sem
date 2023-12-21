@@ -10,7 +10,6 @@ import library.Native;
 import library.Terminal2;
 
 import java.util.List;
-import java.util.Objects;
 
 public class CallStatementExecutor implements Executor<Statement.Call> {
     @Override
@@ -30,6 +29,17 @@ public class CallStatementExecutor implements Executor<Statement.Call> {
             ProcedureContext innerProcedureContext =
                 ProcedureContext.initialize(ApplicationContext.globalProcedureList
                                                               .get(procedureName));
+
+            for (int i = 0; i < statement.getArguments().size(); i++) {
+                innerProcedureContext.updateVariable(
+                    ApplicationContext.getProcedureArguments(statement.getProcedureName().lexeme()),
+                    ExpressionEvaluator.evaluate(statement.getArguments().get(i), procedureContext)
+                );
+                ApplicationContext.setVariable(
+                    ApplicationContext.getProcedureArguments(statement.getProcedureName().lexeme()),
+                    ExpressionEvaluator.evaluate(statement.getArguments().get(i), procedureContext)
+                );
+            }
             if (procedureContext == null) {
                 procedureContext = innerProcedureContext;
             }
@@ -81,7 +91,9 @@ public class CallStatementExecutor implements Executor<Statement.Call> {
                 Terminal2.WriteLn();
                 break;
             case "WriteChar":
-                Terminal2.WriteChar(String.valueOf(arguments.get(0)).charAt(0));
+                char arg = arguments.get(0) instanceof Integer ? (char) ((Integer) arguments.get(0)).intValue()
+                                                               : (char) arguments.get(0);
+                Terminal2.WriteChar(arg);
                 break;
             case "WriteCard":
                 Terminal2.WriteCard((Integer) arguments.get(0), arguments.get(1) != null ? (Integer) arguments.get(1)

@@ -39,8 +39,7 @@ public class Interpreter {
                                                          .findFirst()
                                                          .orElse(null)), null
         );
-        System.out.println(ApplicationContext.globalVariableList);
-        System.out.println(ApplicationContext.globalVariableArrayList);
+
         System.exit(0);
     }
 

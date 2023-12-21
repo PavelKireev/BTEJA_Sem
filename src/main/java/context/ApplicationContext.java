@@ -16,6 +16,7 @@ public class ApplicationContext {
     public static final Map<String, Map<Integer, Object>> globalVariableArrayList = new HashMap<>();
     public static final Map<String, Object> globalConstantList = new HashMap<>();
     public static final Map<String, List<Statement>> globalProcedureList = new HashMap<>();
+    public static final Map<String, String> procedureArgumentList = new HashMap<>();
 
     public static void initialize(List<Statement> statements) {
         String extractedModuleName = statements.stream()
@@ -66,6 +67,30 @@ public class ApplicationContext {
                 .collect(Collectors.toMap(statement -> ((Statement.Procedure) statement).getName().lexeme(),
                                           statement -> ((Statement.Procedure) statement).getBody()));
 
+        statements.stream()
+                .filter(statement -> statement instanceof Statement.Procedure)
+                .forEach(statement ->
+                    procedureArgumentList.put(((Statement.Procedure) statement).getName().lexeme(),
+                                              ((Statement.Procedure) statement).getParameters()
+                                                                                .stream()
+                                                                                .map(parameter ->
+                                                                                    (parameter).getName().lexeme())
+                                                                                .collect(Collectors.joining(", "))));
+
+        statements.stream()
+                  .filter(statement -> statement instanceof Statement.Procedure)
+                  .forEach(statement -> {
+                      List<String> argumentList =
+                          ((Statement.Procedure) statement).getParameters()
+                                                           .stream()
+                                                           .map(parameter -> ((Statement.Var) parameter).getName().lexeme())
+                                                           .toList();
+                        varMap.put(((Statement.Procedure) statement).getName().lexeme(), argumentList.stream()
+                                                              .collect(HashMap::new,
+                                                                       (m, v) -> m.put(v, null),
+                                                                       HashMap::putAll));
+                  });
+
         moduleName = extractedModuleName;
         imports.addAll(extractedImports);
         globalVariableList.putAll(varMap);
@@ -94,9 +119,17 @@ public class ApplicationContext {
         return globalProcedureList.getOrDefault(key, Collections.emptyList());
     }
 
+    public static Object getConst(String key) {
+        return globalConstantList.getOrDefault(key, Collections.emptyMap());
+    }
+
     public static Object getArrayVariable(String key, int index) {
         return globalVariableArrayList.getOrDefault(key, Collections.emptyMap())
                                       .getOrDefault(index, null);
+    }
+
+    public static String getProcedureArguments(String key) {
+        return procedureArgumentList.getOrDefault(key, null);
     }
 
     public static void setVariable(String key, Object value) {
@@ -115,6 +148,10 @@ public class ApplicationContext {
 
     public static boolean arrayExists(String key) {
         return globalVariableArrayList.containsKey(key);
+    }
+
+    public static boolean constantExists(String key) {
+        return globalConstantList.containsKey(key);
     }
 
     public static void setArrayVariable(String key, int index, Object value) {
