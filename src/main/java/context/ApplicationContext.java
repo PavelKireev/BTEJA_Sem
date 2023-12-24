@@ -3,17 +3,20 @@ package context;
 import ast.BasicExpression;
 import ast.Statement;
 import evaluator.ExpressionEvaluator;
+import structure.Array;
+import structure.Variable;
 
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 public class ApplicationContext {
 
     public static String moduleName = "";
     public static final List<String> imports = new ArrayList<>();
     public static final List<Statement> mainProcudure = new ArrayList<>();
-    public static final Map<String, Object> globalVariableList = new HashMap<>();
-    public static final Map<String, Map<Integer, Object>> globalVariableArrayList = new HashMap<>();
+    public static final Map<String, Variable> globalVariableList = new HashMap<>();
+    public static final Map<String, Array> globalVariableArrayList = new HashMap<>();
     public static final Map<String, Object> globalConstantList = new HashMap<>();
     public static final Map<String, List<Statement>> globalProcedureList = new HashMap<>();
     public static final Map<String, String> procedureArgumentList = new HashMap<>();
@@ -38,20 +41,28 @@ public class ApplicationContext {
                                                     ((Statement.Const) statement).initializer,
                                                     null))
                       );
-        Map<String, Object> varMap =
+        Map<String, Variable> varMap =
             statements.stream()
                       .filter(statement -> statement instanceof Statement.Var)
                       .collect(HashMap::new,
-                               (m, v) -> m.put(((Statement.Var) v).getName().lexeme(), null),
-                               HashMap::putAll
+                               (m, v) -> m.put(((Statement.Var) v).getName().lexeme(),
+                                               new Variable(((Statement.Var) v).getName().lexeme(), null,
+                                                            ((Statement.Var) v).getType().lexeme())),
+                                               HashMap::putAll
                       );
-        Map<String, Map<Integer, Object>> varArrayMap =
+
+        Map<String, Array> varArrayMap =
             statements.stream()
                       .filter(statement -> statement instanceof Statement.VarArray)
+                      .map(statement -> (Statement.VarArray) statement)
                       .collect(
                           Collectors.toMap(
-                              statement -> ((Statement.VarArray) statement).name.lexeme(),
-                              statement -> new HashMap<>())
+                              statement -> statement.name.lexeme(),
+                              statement -> new Array(statement.name.lexeme(),
+                                                     statement.getDimensionRanges(),
+                                                     statement.getType().lexeme(),
+                                                     new HashMap<>())
+                          )
                       );
 
         List<Statement> extractedMainProcedure =
@@ -79,17 +90,12 @@ public class ApplicationContext {
 
         statements.stream()
                   .filter(statement -> statement instanceof Statement.Procedure)
-                  .forEach(statement -> {
-                      List<String> argumentList =
-                          ((Statement.Procedure) statement).getParameters()
-                                                           .stream()
-                                                           .map(parameter -> ((Statement.Var) parameter).getName().lexeme())
-                                                           .toList();
-                        varMap.put(((Statement.Procedure) statement).getName().lexeme(), argumentList.stream()
-                                                              .collect(HashMap::new,
-                                                                       (m, v) -> m.put(v, null),
-                                                                       HashMap::putAll));
-                  });
+                  .forEach(statement -> ((Statement.Procedure) statement).getParameters()
+                                                   .forEach(param -> varMap.put(param.getName().lexeme(),
+                                                                                new Variable(param.getName().lexeme(),
+                                                                                             null,
+                                                                                             param.getType().lexeme())))
+                  );
 
         moduleName = extractedModuleName;
         imports.addAll(extractedImports);
@@ -103,7 +109,7 @@ public class ApplicationContext {
 
     public void setVariableValue(String key, BasicExpression value) {
         if (globalVariableList.containsKey(key)) {
-            globalVariableList.replace(key, value);
+            globalVariableList.get(key).setValue(ExpressionEvaluator.evaluate(value, null));
         }
     }
 
@@ -111,7 +117,7 @@ public class ApplicationContext {
         return globalConstantList.getOrDefault(key, null);
     }
 
-    public static Object getVariable(String key) {
+    public static Variable getVariable(String key) {
         return globalVariableList.getOrDefault(key, null);
     }
 
@@ -123,9 +129,9 @@ public class ApplicationContext {
         return globalConstantList.getOrDefault(key, Collections.emptyMap());
     }
 
-    public static Object getArrayVariable(String key, int index) {
-        return globalVariableArrayList.getOrDefault(key, Collections.emptyMap())
-                                      .getOrDefault(index, null);
+    public static Object getArrayVariable(String key, Integer... index) {
+        return globalVariableArrayList.getOrDefault(key, null)
+                                      .getIndexValueMap().get(new Array.CompositeKey(index));
     }
 
     public static String getProcedureArguments(String key) {
@@ -133,13 +139,17 @@ public class ApplicationContext {
     }
 
     public static void setVariable(String key, Object value) {
-        globalVariableList.put(key, value);
+        globalVariableList.put(key, new Variable(key, value, null));
     }
 
     public static void updateVariable(String key, Object value) {
         if (globalVariableList.containsKey(key)) {
-            globalVariableList.replace(key, value);
+            globalVariableList.get(key).setValue(value);
         }
+    }
+
+    public static Array getArray(String key) {
+        return globalVariableArrayList.getOrDefault(key, null);
     }
 
     public static boolean varExists(String key) {
@@ -154,9 +164,11 @@ public class ApplicationContext {
         return globalConstantList.containsKey(key);
     }
 
-    public static void setArrayVariable(String key, int index, Object value) {
-        globalVariableArrayList.getOrDefault(key, Collections.emptyMap())
-                               .put(index, value);
+    public static void setArrayVariable(String key, Object value, Integer... index) {
+        Array.CompositeKey compositeKey = new Array.CompositeKey(index);
+        globalVariableArrayList.getOrDefault(key, null)
+                               .getIndexValueMap()
+                               .put(compositeKey, value);
     }
 
 }

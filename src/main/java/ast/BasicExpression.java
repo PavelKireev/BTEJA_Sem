@@ -11,13 +11,30 @@ public abstract class BasicExpression {
         public final BasicExpression left;
         public final Token operator;
         public final BasicExpression right;
+        public final int line;
 
-        public Binary(BasicExpression left, Token operator, BasicExpression right) {
+        public Binary(BasicExpression left, Token operator, BasicExpression right, int line) {
             this.left = left;
             this.operator = operator;
             this.right = right;
+            this.line = line;
         }
 
+        public BasicExpression getLeft() {
+            return left;
+        }
+
+        public Token getOperator() {
+            return operator;
+        }
+
+        public BasicExpression getRight() {
+            return right;
+        }
+
+        public int getLine() {
+            return line;
+        }
     }
 
     public static class Grouping extends BasicExpression {
@@ -51,9 +68,9 @@ public abstract class BasicExpression {
 
     public static class ArrayVariable extends BasicExpression {
         public final Token name;
-        public final Token index;
+        public final Token[] index;
 
-        public ArrayVariable(Token name, Token index) {
+        public ArrayVariable(Token name, Token[] index) {
             this.name = name;
             this.index = index;
         }

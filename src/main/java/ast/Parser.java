@@ -193,19 +193,36 @@ public class Parser {
             if (TokenType.OPEN_BRACKET.equals(tokenList.get(tokenIndex).type())) {
                 peekToken();
                 try {
+                    Map<Integer, Set<Integer>> dimensionRange = new HashMap<>();
+                    Integer dimension = 0;
                     int indexFrom = Integer.parseInt(peekToken().lexeme());
                     peekToken();
                     peekToken();
                     int indexTo = Integer.parseInt(peekToken().lexeme());
+                    dimensionRange.put(dimension, IntStream.range(indexFrom, indexTo + 1)
+                                  .boxed()
+                                  .collect(Collectors.toSet()));
                     peekToken();
                     currentToken = peekToken();
+                    while (TokenType.OPEN_BRACKET.equals(currentToken.type())) {
+                        dimension++;
+                        int rangeIndexFrom = Integer.parseInt(peekToken().lexeme());
+                        peekToken();
+                        peekToken();
+                        int rangeIndexTo = Integer.parseInt(peekToken().lexeme());
+                        dimensionRange.put(dimension, IntStream.range(rangeIndexFrom, rangeIndexTo + 1)
+                                      .boxed()
+                                      .collect(Collectors.toSet()));
+                        peekToken();
+                        currentToken = peekToken();
+                    }
                     if (!TokenType.OF.equals(currentToken.type())) {
                         throw new IllegalTokenException(String.format(ILLEGAL_TOKEN_ERROR_MESSAGE,
                             currentToken.type(), "VarArray declaration", currentToken.line()));
                     }
                     Token type = peekToken();
                     for (Token name : names) {
-                        varArrays.add(new Statement.VarArray(name, type, indexFrom, indexTo, null));
+                        varArrays.add(new Statement.VarArray(name, type, dimensionRange, null));
                     }
                     peekToken();
                     currentToken = peekToken();
@@ -398,9 +415,10 @@ public class Parser {
         }
 
         if (TokenType.ELSIF.equals(tokenList.get(tokenIndex).type())) {
-            peekToken();
-
-            BasicExpression elsifCondition = readExpression(new BasicExpression.Literal(peekToken()));
+            currentToken = peekToken();
+            int line = currentToken.line();
+            currentToken = peekToken();
+            BasicExpression elsifCondition = readExpression(new BasicExpression.Literal(currentToken));
             List<Statement> elsifBody = new ArrayList<>();
 
             while (!TokenType.ELSIF.equals(tokenList.get(tokenIndex).type()) &&
@@ -409,7 +427,7 @@ public class Parser {
                 elsifBody.add(readStatement());
             }
 
-            elsifBranches.add(new Statement.Elsif(elsifCondition, elsifBody));
+            elsifBranches.add(new Statement.Elsif(elsifCondition, elsifBody, line));
         }
 
         if (TokenType.ELSE.equals(tokenList.get(tokenIndex).type())) {
@@ -425,7 +443,7 @@ public class Parser {
         if (TokenType.SEMICOLON.equals(tokenList.get(tokenIndex).type())) {
             peekToken();
         }
-        return new Statement.If(condition, body, elsifBranches, elseBranch);
+        return new Statement.If(condition, body, elsifBranches, elseBranch, currentToken.line());
     }
 
     private Statement.While readWhileStatement() {
@@ -558,7 +576,7 @@ public class Parser {
         }
         peekToken();
         peekToken();
-        return new Statement.For(index, toExpression, byExpression, body);
+        return new Statement.For(index, toExpression, byExpression, body, currentToken.line());
     }
 
     public Statement readAssignmentOrCallStatement() {
@@ -595,16 +613,24 @@ public class Parser {
         } else if (TokenType.SEMICOLON.equals(currentToken.type())) {
             return new Statement.Call(ident, Collections.emptyList());
         } else if (TokenType.OPEN_BRACKET.equals(currentToken.type())) {
+            List<Token> indices = new ArrayList<>();
             currentToken = peekToken();
-            Token index = currentToken;
+            indices.add(currentToken);
             peekToken();
-            peekToken();
+            currentToken = peekToken();
+            while (!TokenType.ASSIGNMENT.equals(currentToken.type())) {
+                indices.add(peekToken());
+                peekToken();
+                currentToken = peekToken();
+            }
             currentToken = peekToken();
             if (TokenType.SEMICOLON.equals(tokenList.get(tokenIndex).type())) {
                 peekToken();
             }
             expression = readExpression(new BasicExpression.Literal(currentToken));
-            return new Statement.Assignment(new BasicExpression.ArrayVariable(ident, index), expression);
+            return new Statement.Assignment(new BasicExpression.ArrayVariable(ident,
+                                                                              indices.toArray(new Token[0])),
+                                                                              expression);
         } else if (TokenType.OPEN_PARENTHESIS.equals(currentToken.type())) {
             currentToken = peekToken();
             List<BasicExpression> argumentExpressions = new ArrayList<>();
@@ -673,8 +699,15 @@ public class Parser {
             Token ident = ((BasicExpression.Literal) expression).value;
             peekToken();
             Token index = peekToken();
+            List<Token> indices = new ArrayList<>();
+            indices.add(index);
             peekToken();
-            expression = new BasicExpression.ArrayVariable(ident, index);
+            while (!TokenType.COMMA.equals(tokenList.get(tokenIndex).type())) {
+                peekToken();
+                indices.add(peekToken());
+                peekToken();
+            }
+            expression = new BasicExpression.ArrayVariable(ident, indices.toArray(new Token[0]));
         }
 
         if (expression instanceof BasicExpression.Literal &&
@@ -707,7 +740,8 @@ public class Parser {
                 } else {
                     groupedRight = new BasicExpression.Literal(currentToken);
                 }
-                groupExpression = new BasicExpression.Binary(groupExpression, groupedOperator, groupedRight);
+                groupExpression = new BasicExpression.Binary(groupExpression, groupedOperator,
+                                                             groupedRight, currentToken.line());
                 if (MATH_OPERATION_TYPE_LIST.contains(tokenList.get(tokenIndex).type()) ||
                     BOOLEAN_OPERATION_TYPE_LIST.contains(tokenList.get(tokenIndex).type())) {
                     currentToken = peekToken();
@@ -754,10 +788,12 @@ public class Parser {
                     if (TokenType.MINUS.equals(currentToken.type())) {
                         currentToken = peekToken();
                         BasicExpression groupedRight = new BasicExpression.Negation(new BasicExpression.Literal(currentToken));
-                        groupExpression = new BasicExpression.Binary(groupExpression, groupedOperator, groupedRight);
+                        groupExpression = new BasicExpression.Binary(groupExpression, groupedOperator, groupedRight,
+                                                                     currentToken.line());
                     } else {
                         BasicExpression groupedRight = new BasicExpression.Literal(currentToken);
-                        groupExpression = new BasicExpression.Binary(groupExpression, groupedOperator, groupedRight);
+                        groupExpression = new BasicExpression.Binary(groupExpression, groupedOperator,
+                                                                     groupedRight, currentToken.line());
                     }
                     if (MATH_OPERATION_TYPE_LIST.contains(tokenList.get(tokenIndex).type())) {
                         currentToken = peekToken();
@@ -765,7 +801,7 @@ public class Parser {
                 }
                 currentToken = peekToken();
                 expression = new BasicExpression.Binary(expression, operator,
-                    new BasicExpression.Grouping(groupExpression));
+                    new BasicExpression.Grouping(groupExpression), currentToken.line());
             } else if (TokenType.IDENT.equals(currentToken.type()) &&
                 TokenType.OPEN_PARENTHESIS.equals(tokenList.get(tokenIndex).type())) {
                 Token ident = currentToken;
@@ -780,7 +816,8 @@ public class Parser {
                 }
                 currentToken = peekToken();
                 expression = new BasicExpression.Binary(expression, operator,
-                    new BasicExpression.ProcedureCall(ident, argumentExpressions));
+                                                        new BasicExpression.ProcedureCall(ident, argumentExpressions),
+                                                        currentToken.line());
             } else {
                 currentToken = peekToken();
                 BasicExpression rightExpression;
@@ -791,7 +828,7 @@ public class Parser {
                 } else {
                     rightExpression = new BasicExpression.Literal(right);
                 }
-                expression = new BasicExpression.Binary(left, operator, rightExpression);
+                expression = new BasicExpression.Binary(left, operator, rightExpression, currentToken.line());
             }
 
             if (TokenType.CLOSE_PARENTHESIS.equals(currentToken.type())) {

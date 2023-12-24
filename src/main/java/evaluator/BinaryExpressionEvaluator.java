@@ -4,7 +4,12 @@ import ast.BasicExpression;
 import context.ProcedureContext;
 import interpreter.Interpreter;
 
+import java.util.List;
+
 public class BinaryExpressionEvaluator implements Evaluator<BasicExpression.Binary> {
+
+    private static final List<String> prioritizedOperators = List.of("*", "DIV", "/", "MOD");
+
     @Override
     public Object evaluate(BasicExpression.Binary expression, ProcedureContext procedureContext) {
         Object left = ExpressionEvaluator.evaluate(expression.left, procedureContext);

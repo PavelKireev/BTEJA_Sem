@@ -16,7 +16,7 @@ BEGIN
    Diff := A - B;                   (* Subtraction              *)
    A := (A + B)/(12.345 * A - B);   (* Multiple math expression *)
 
-   WriteString("The REAL values are");
+   WriteString("The REAL values are: ");
    WriteReal(Sum,12);
    WriteString("  ");
    WriteReal(Diff,12);

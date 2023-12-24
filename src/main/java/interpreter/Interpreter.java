@@ -1,5 +1,6 @@
 package interpreter;
 
+import analyzer.SemanticAnalyzer;
 import ast.Statement;
 import context.ApplicationContext;
 import executor.MainStatementExecutor;
@@ -30,6 +31,12 @@ public class Interpreter {
     private static void run(String source) {
         Block block = Block.readBlock(source);
         ApplicationContext.initialize(block.getStatementList());
+
+        for (Statement statement : block.getStatementList()) {
+            if (statement != null) {
+                SemanticAnalyzer.analyze(statement, block);
+            }
+        }
 
         MainStatementExecutor mainStatementExecutor = new MainStatementExecutor();
         mainStatementExecutor.execute(

@@ -6,11 +6,25 @@ import evaluator.ExpressionEvaluator;
 import interpreter.Interpreter;
 
 import java.util.List;
+import java.util.Map;
 
 public class Native {
 
     public static final List<String> supportedProcedures = List.of("CHR", "FLOAT", "TRUNC", "ORD",
                                                                    "CAP", "VAL", "INC", "DEC", "MIN", "MAX");
+
+    public static final Map<String, List<String>> ARGS_MAP = Map.of(
+        "CHR", List.of("NUMERIC"),
+        "FLOAT", List.of("NUMERIC"),
+        "TRUNC", List.of("NUMERIC"),
+        "ORD", List.of("NUMERIC"),
+        "CAP", List.of("NUMERIC"),
+        "VAL", List.of("STRING", "NUMERIC"),
+        "INC", List.of("NUMERIC"),
+        "DEC", List.of("NUMERIC"),
+        "MIN", List.of("TYPE"),
+        "MAX", List.of("TYPE")
+    );
 
     public static Object executeNativeProcedure(BasicExpression.ProcedureCall expression, ProcedureContext procedureContext) {
         String procedureName = expression.name.lexeme();

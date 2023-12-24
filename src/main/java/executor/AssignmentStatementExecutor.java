@@ -7,6 +7,8 @@ import context.ProcedureContext;
 import evaluator.ExpressionEvaluator;
 import structure.Variable;
 
+import java.util.Arrays;
+
 public class AssignmentStatementExecutor implements Executor<Statement.Assignment> {
     @Override
     public void execute(Statement.Assignment statement, ProcedureContext procedureContext) {
@@ -24,20 +26,26 @@ public class AssignmentStatementExecutor implements Executor<Statement.Assignmen
 
         if (statement.getIdent() instanceof BasicExpression.ArrayVariable) {
             if (ApplicationContext.arrayExists(((BasicExpression.ArrayVariable) statement.getIdent()).name.lexeme())) {
+                Integer[] indicies =
+                    Arrays.stream(((BasicExpression.ArrayVariable) statement.getIdent()).index)
+                          .map(index ->
+                              (Integer) ExpressionEvaluator.evaluate(new BasicExpression.Literal(index),
+                                                                   procedureContext))
+                          .toList().toArray(Integer[]::new);
+
                 ApplicationContext.setArrayVariable(
                     ((BasicExpression.ArrayVariable) statement.getIdent()).name.lexeme(),
-                    (Integer) ExpressionEvaluator.evaluate(
-                        new BasicExpression.Literal(((BasicExpression.ArrayVariable) statement.getIdent()).index),
-                        procedureContext),
-                    value
+                    value,
+                    indicies
                 );
             } else if (procedureContext != null) {
                 procedureContext.setArrayVariable(
-                    ((BasicExpression.ArrayVariable) statement.getIdent()).name.lexeme(),
-                    (Integer) ExpressionEvaluator.evaluate(
-                        new BasicExpression.Literal(((BasicExpression.ArrayVariable) statement.getIdent()).index),
-                        procedureContext),
-                    value
+                    ((BasicExpression.ArrayVariable) statement.getIdent()).name.lexeme(), value,
+                    Arrays.stream(((BasicExpression.ArrayVariable) statement.getIdent()).index)
+                        .map(index ->
+                            (Integer) ExpressionEvaluator.evaluate(new BasicExpression.Literal(index),
+                                procedureContext))
+                        .toList().toArray(Integer[]::new)
                 );
             }
         }

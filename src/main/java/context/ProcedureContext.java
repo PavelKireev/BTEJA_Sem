@@ -2,22 +2,24 @@ package context;
 
 import ast.BasicExpression;
 import ast.Statement;
-import scanner.Token;
-import scanner.TokenType;
+import evaluator.ExpressionEvaluator;
+import structure.Array;
+import structure.Variable;
 
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 public class ProcedureContext {
 
-    private final Map<String, Object> variables;
-    private final Map<String, Map<Integer, Object>> varArrayList;
+    private final Map<String, Variable> variables;
+    private final Map<String, Array> varArrayList;
     private final Map<String, ProcedureContext> procedureContexts;
     private final List<Statement> body;
 
 
-    public ProcedureContext(Map<String, Object> variables,
-                            Map<String, Map<Integer, Object>> varArrayList,
+    public ProcedureContext(Map<String, Variable> variables,
+                            Map<String, Array> varArrayList,
                             Map<String, ProcedureContext> procedureContexts,
                             List<Statement> body) {
         this.variables = variables;
@@ -34,21 +36,26 @@ public class ProcedureContext {
     }
 
     public static ProcedureContext initialize(List<Statement> statements) {
-        Map<String, Object> varMap =
+        Map<String, Variable> varMap =
             statements.stream()
                 .filter(statement -> statement instanceof Statement.Var)
                 .collect(HashMap::new,
-                    (m, v) -> m.put(((Statement.Var) v).getName().lexeme(), null),
-                    HashMap::putAll
+                         (m, v) -> m.put(((Statement.Var) v).getName().lexeme(),
+                                         new Variable(((Statement.Var) v).getName().lexeme(), null,
+                                         ((Statement.Var) v).getType().lexeme())),
+                         HashMap::putAll
                 );
 
-        Map<String, Map<Integer, Object>> varArrayMap =
+        Map<String, Array> varArrayMap =
             statements.stream()
                 .filter(statement -> statement instanceof Statement.VarArray)
                 .collect(
                     Collectors.toMap(
                         statement -> ((Statement.VarArray) statement).name.lexeme(),
-                        statement -> new HashMap<>())
+                        statement -> new Array(((Statement.VarArray) statement).name.lexeme(),
+                                               ((Statement.VarArray) statement).getDimensionRanges(),
+                                               ((Statement.VarArray) statement).getType().lexeme(),
+                                               new HashMap<>()))
                 );
         Map<String, ProcedureContext> subProcedures =
             statements.stream()
@@ -73,26 +80,31 @@ public class ProcedureContext {
         return new ProcedureContext(varMap, varArrayMap, subProcedures, body);
     }
 
-    public Object getVariable(String key) {
+    public Variable getVariable(String key) {
         return variables.getOrDefault(key, null);
+    }
+    public boolean containsVariable(String key) {
+        return variables.containsKey(key);
     }
 
     public ProcedureContext getProcedure(String key) {
         return procedureContexts.getOrDefault(key, null);
     }
 
-    public Object getArrayVariable(String key, int index) {
-        return varArrayList.getOrDefault(key, Collections.emptyMap())
-                           .getOrDefault(index, null);
+    public Object getArrayVariable(String key, Integer... index) {
+        return varArrayList.getOrDefault(key, null)
+                           .getIndexValueMap()
+                           .get(new Array.CompositeKey(index));
     }
 
     public void setVariable(String key, Object value) {
-        variables.put(key, value);
+        variables.get(key).setValue(value);
     }
 
-    public void setArrayVariable(String key, int index, Object value) {
-        varArrayList.getOrDefault(key, Collections.emptyMap())
-                    .put(index, value);
+    public void setArrayVariable(String key, Object value, Integer... index) {
+        varArrayList.getOrDefault(key, null)
+                    .getIndexValueMap()
+                    .put(new Array.CompositeKey(index), value);
     }
 
     public Map<String, ProcedureContext> getProcedureContexts() {
@@ -103,6 +115,9 @@ public class ProcedureContext {
         return body;
     }
 
+    public boolean arrayExists(String key) {
+        return varArrayList.containsKey(key);
+    }
 
     public ProcedureContext getProcedureContext(String key) {
         return procedureContexts.getOrDefault(key, null);
@@ -118,13 +133,27 @@ public class ProcedureContext {
 
     public void updateVariable(String key, Object value) {
         if (variables.containsKey(key)) {
-            variables.replace(key, value);
+            variables.getOrDefault(key, null)
+                     .setValue(value);
         }
     }
 
     public void setVariableValue(String key, BasicExpression value) {
         if (variables.containsKey(key)) {
-            variables.replace(key, value);
+            variables.getOrDefault(key, null)
+                     .setValue(ExpressionEvaluator.evaluate(value, this));
         }
+    }
+
+    public Array getArray(String key) {
+        return varArrayList.getOrDefault(key, null);
+    }
+
+    public Map<String, Variable> getVariables() {
+        return variables;
+    }
+
+    public Map<String, Array> getVarArrayList() {
+        return varArrayList;
     }
 }

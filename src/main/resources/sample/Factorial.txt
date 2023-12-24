@@ -10,7 +10,7 @@ BEGIN
 	    factorial:=factorial*n;
 	END;
 END Fact;
-	
+
 BEGIN
    FOR Index := 0 TO 8 DO
 	WriteCard(Index,3);

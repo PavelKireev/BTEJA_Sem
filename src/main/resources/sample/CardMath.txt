@@ -1,4 +1,3 @@
-	
 MODULE CardMath;
 
 FROM Terminal2 IMPORT WriteLn, WriteString, WriteCard;

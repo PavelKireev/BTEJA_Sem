@@ -4,14 +4,13 @@ public class Variable {
 
     private String name;
     private Object value;
-    private Type type;
+    private String type;
 
-    public Variable(String name, Object value, Type type) {
+    public Variable(String name, Object value, String type) {
         this.name = name;
         this.value = value;
         this.type = type;
     }
-
 
     public String getName() {
         return name;
@@ -31,12 +30,7 @@ public class Variable {
         return this;
     }
 
-    public Type getType() {
+    public String getType() {
         return type;
-    }
-
-    public Variable setType(Type type) {
-        this.type = type;
-        return this;
     }
 }

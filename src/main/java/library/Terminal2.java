@@ -1,11 +1,21 @@
 package library;
 
 import java.util.List;
+import java.util.Map;
 
 public class Terminal2 {
 
     public static final List<String> supportedProcedures = List.of("WriteString", "WriteInt", "WriteLn",
                                                                    "WriteChar", "WriteCard", "WriteReal");
+
+    public static final Map<String, List<String>> ARGS_MAP = Map.of(
+        "WriteString", List.of("STRING"),
+        "WriteInt", List.of("NUMERIC", "NUMERIC"),
+        "WriteLn", List.of(),
+        "WriteChar", List.of("CHAR"),
+        "WriteCard", List.of("NUMERIC", "NUMERIC"),
+        "WriteReal", List.of("NUMERIC", "NUMERIC")
+    );
 
     public static void WriteString(String text) {
         System.out.print(text.replace("\"", ""));

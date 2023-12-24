@@ -9,14 +9,6 @@ VAR  Index   : INTEGER;
      Letter  : CHAR;
 
 BEGIN
-   WriteString("WHILE loop      = ");
-   Index := 0;
-   WHILE Index < 5 DO        (* This can be any BOOLEAN expression *)
-      Index := Index + 1;
-      WriteInt(Index,5);
-   END;
-   WriteLn;
-
    WriteString("First FOR loop  = ");
    FOR Index := 1 TO 5 DO
       WriteInt(Index,5);
@@ -50,7 +42,7 @@ BEGIN
 (* Note - The next two loops are demonstrations of using a CHAR
           type variable to index a FOR loop.                      *)
 
-   FOR Letter := "A" TO 'Z' DO
+   FOR Letter := 'A' TO 'Z' DO
       WriteChar(Letter);
    END;
    WriteLn;

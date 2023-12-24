@@ -1,0 +1,36 @@
+MODULE Arrays;
+
+FROM Terminal2 IMPORT WriteString, WriteCard, WriteLn;
+
+VAR Index1, Index2, Index3 : CARDINAL;
+Automobiles                : ARRAY [1..12][1..10][1..30] OF CARDINAL;
+
+BEGIN   (* main program *)
+   FOR Index1 := 1 TO 12 DO
+      FOR Index2 := 1 TO 10 DO
+         FOR Index3 := 1 TO 30 DO
+            Automobiles[Index1][Index2][Index3] := Index3 * 3 + 10;
+         END;
+      END;
+   END;
+   Automobiles[7][1][3] := 54;  (* example, change one value of array *)
+   WriteString("This is the first program with an array.");
+   WriteLn;
+   WriteLn;                       (* end of data initialization *)
+
+   FOR Index1 := 1 TO 12 DO              (* display the data now *)
+      FOR Index2 := 1 TO 10 DO
+         FOR Index3 := 1 TO 30 DO
+            WriteString("Automobile number [");
+            WriteCard(Index1, 0);
+            WriteString("][");
+            WriteCard(Index2, 0);
+            WriteString("][");
+            WriteCard(Index3, 0);
+            WriteString("] has the value of");
+            WriteCard(Automobiles[Index1][Index2][Index3],3);
+            WriteLn;
+        END;
+      END;
+   END;
+END Arrays.

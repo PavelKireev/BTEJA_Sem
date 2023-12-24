@@ -17,7 +17,8 @@ public class LiteralExpressionEvaluator implements Evaluator<BasicExpression.Lit
         }
 
         if (ApplicationContext.getVariable(value) != null) {
-            return ApplicationContext.getVariable(value);
+            return ApplicationContext.getVariable(value)
+                                     .getValue();
         }
 
         if (ApplicationContext.constantExists(value)) {
@@ -25,7 +26,8 @@ public class LiteralExpressionEvaluator implements Evaluator<BasicExpression.Lit
         }
 
         if (procedureContext != null && procedureContext.getVariable(value) != null) {
-            return procedureContext.getVariable(value);
+            return procedureContext.getVariable(value)
+                                   .getValue();
         }
 
         try {
