@@ -5,10 +5,8 @@ import ast.Statement;
 import evaluator.ExpressionEvaluator;
 import structure.Array;
 import structure.Variable;
-
 import java.util.*;
 import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 
 public class ProcedureContext {
 
@@ -16,6 +14,8 @@ public class ProcedureContext {
     private final Map<String, Array> varArrayList;
     private final Map<String, ProcedureContext> procedureContexts;
     private final List<Statement> body;
+
+    private final List<String> parameters;
 
 
     public ProcedureContext(Map<String, Variable> variables,
@@ -26,6 +26,7 @@ public class ProcedureContext {
         this.varArrayList = varArrayList;
         this.procedureContexts = procedureContexts;
         this.body = body;
+        this.parameters = new ArrayList<>();
     }
 
     public ProcedureContext() {
@@ -33,9 +34,26 @@ public class ProcedureContext {
         this.varArrayList = new HashMap<>();
         this.procedureContexts = new HashMap<>();
         this.body = new ArrayList<>();
+        this.parameters = new ArrayList<>();
     }
 
-    public static ProcedureContext initialize(List<Statement> statements) {
+    public ProcedureContext(Map<String, Variable> variables,
+                            Map<String, Array> varArrayList,
+                            Map<String, ProcedureContext> procedureContexts,
+                            List<Statement> body, List<String> parameters) {
+        this.variables = variables;
+        this.varArrayList = varArrayList;
+        this.procedureContexts = procedureContexts;
+        this.body = body;
+        this.parameters = parameters;
+    }
+
+    public static ProcedureContext initialize(Statement.Procedure procedure) {
+        if (procedure == null) {
+            return null;
+        }
+        List<String> parameters = new ArrayList<>();
+        List<Statement> statements = procedure.getBody();
         Map<String, Variable> varMap =
             statements.stream()
                 .filter(statement -> statement instanceof Statement.Var)
@@ -45,6 +63,14 @@ public class ProcedureContext {
                                          ((Statement.Var) v).getType().lexeme())),
                          HashMap::putAll
                 );
+
+        procedure.getParameters()
+                 .forEach(parameter -> {
+                     varMap.put(parameter.getName().lexeme(),
+                                new Variable(parameter.getName().lexeme(),
+                                null, parameter.getType().lexeme()));
+                     parameters.add(parameter.getName().lexeme());
+                 });
 
         Map<String, Array> varArrayMap =
             statements.stream()
@@ -62,8 +88,7 @@ public class ProcedureContext {
                       .filter(statement -> statement instanceof Statement.Procedure)
                       .collect(
                           Collectors.toMap(statement -> ((Statement.Procedure) statement).getName().lexeme(),
-                                           statement -> ProcedureContext.initialize(((Statement.Procedure) statement)
-                                                                                                    .getBody()))
+                                           statement -> ProcedureContext.initialize(((Statement.Procedure) statement)))
                       );
 
         for (ProcedureContext procedureContext : subProcedures.values()) {
@@ -77,7 +102,7 @@ public class ProcedureContext {
                                            !(statement instanceof Statement.Procedure))
                       .toList();
 
-        return new ProcedureContext(varMap, varArrayMap, subProcedures, body);
+        return new ProcedureContext(varMap, varArrayMap, subProcedures, body, parameters);
     }
 
     public Variable getVariable(String key) {
@@ -129,6 +154,10 @@ public class ProcedureContext {
 
     public void addProcedureContext(String key, ProcedureContext procedureContext) {
         procedureContexts.put(key, procedureContext);
+    }
+
+    public List<String> getParameters() {
+        return parameters;
     }
 
     public void updateVariable(String key, Object value) {

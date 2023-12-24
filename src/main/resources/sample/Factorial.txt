@@ -3,8 +3,9 @@ FROM Terminal2 IMPORT WriteCard, WriteLn;
 
 VAR factorial, Index, n : CARDINAL;
 
-PROCEDURE Fact(n:CARDINAL);
+PROCEDURE Fact(n:CARDINAL, test:CARDINAL);
 BEGIN
+    WriteCard(test, 3);
 	factorial := 1;
 	FOR n:=n TO 1 BY -1 DO
 	    factorial:=factorial*n;
@@ -14,7 +15,7 @@ END Fact;
 BEGIN
    FOR Index := 0 TO 8 DO
 	WriteCard(Index,3);
-	Fact(Index);
+	Fact(Index, Index * 2);
 	WriteCard(factorial,12);
 	WriteLn;
    END;

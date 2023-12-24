@@ -9,25 +9,25 @@ public class LiteralExpressionEvaluator implements Evaluator<BasicExpression.Lit
     public Object evaluate(BasicExpression.Literal expression, ProcedureContext procedureContext) {
         String value = expression.value.lexeme();
 
-
         if (value.equals("TRUE")) {
             return true;
         } else if (value.equals("FALSE")) {
             return false;
         }
 
-        if (ApplicationContext.getVariable(value) != null) {
+
+        if (procedureContext != null && procedureContext.getVariable(value) != null) {
+            return procedureContext.getVariable(value)
+                .getValue();
+        }
+
+        if (ApplicationContext.varExists(value)) {
             return ApplicationContext.getVariable(value)
                                      .getValue();
         }
 
         if (ApplicationContext.constantExists(value)) {
             return ApplicationContext.getConst(value);
-        }
-
-        if (procedureContext != null && procedureContext.getVariable(value) != null) {
-            return procedureContext.getVariable(value)
-                                   .getValue();
         }
 
         try {

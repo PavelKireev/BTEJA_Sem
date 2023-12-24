@@ -24,6 +24,10 @@ public class CallStatementExecutor implements Executor<Statement.Call> {
             );
             ApplicationContext.updateVariable(procedureName,
                                               Native.executeNativeProcedure(procedureCall, procedureContext));
+            if (procedureContext != null) {
+                procedureContext.updateVariable(procedureName,
+                                                Native.executeNativeProcedure(procedureCall, procedureContext));
+            }
         } else if (ApplicationContext.globalProcedureList
                                      .get(procedureName) != null) {
             ProcedureContext innerProcedureContext =
@@ -32,12 +36,12 @@ public class CallStatementExecutor implements Executor<Statement.Call> {
 
             for (int i = 0; i < statement.getArguments().size(); i++) {
                 innerProcedureContext.updateVariable(
-                    ApplicationContext.getProcedureArguments(statement.getProcedureName().lexeme()),
-                    ExpressionEvaluator.evaluate(statement.getArguments().get(i), procedureContext)
+                    innerProcedureContext.getParameters().get(i),
+                    ExpressionEvaluator.evaluate(statement.getArguments().get(i), innerProcedureContext)
                 );
-                ApplicationContext.setVariable(
+                ApplicationContext.updateVariable(
                     ApplicationContext.getProcedureArguments(statement.getProcedureName().lexeme()),
-                    ExpressionEvaluator.evaluate(statement.getArguments().get(i), procedureContext)
+                    ExpressionEvaluator.evaluate(statement.getArguments().get(i), innerProcedureContext)
                 );
             }
             if (procedureContext == null) {
@@ -46,11 +50,12 @@ public class CallStatementExecutor implements Executor<Statement.Call> {
 
             procedureContext.addProcedureContext(procedureName, innerProcedureContext);
             procedureContext.getProcedureContexts().putAll(innerProcedureContext.getProcedureContexts());
-            ProcedureContext finalProcedureContext = procedureContext;
+            ProcedureContext finalProcedureContext1 = procedureContext;
             ApplicationContext.globalProcedureList
                               .get(procedureName)
+                              .getBody()
                               .forEach(procedureStatement ->
-                                  StatementExecutor.execute(procedureStatement, finalProcedureContext));
+                                  StatementExecutor.execute(procedureStatement, finalProcedureContext1));
         } else if (procedureContext != null && procedureContext.getProcedureContext(procedureName) != null) {
             ProcedureContext innerProcedureContext = procedureContext.getProcedureContext(procedureName);
             procedureContext.addProcedureContext(procedureName, innerProcedureContext);

@@ -12,8 +12,9 @@ import java.util.List;
 public class ProcedureCallExpressionEvaluator implements Evaluator<BasicExpression.ProcedureCall> {
     @Override
     public Object evaluate(BasicExpression.ProcedureCall expression, ProcedureContext procedureContext) {
-        if (!ApplicationContext.getProcedure(expression.name.lexeme()).isEmpty()) {
+        if (ApplicationContext.getProcedure(expression.name.lexeme()) != null) {
             ApplicationContext.getProcedure(expression.name.lexeme())
+                              .getBody()
                               .forEach(statement -> StatementExecutor.execute(statement, procedureContext));
         } else if (procedureContext != null && procedureContext.getProcedure(expression.name.lexeme()) != null) {
             procedureContext.getProcedure(expression.name.lexeme())

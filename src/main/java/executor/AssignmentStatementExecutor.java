@@ -30,7 +30,7 @@ public class AssignmentStatementExecutor implements Executor<Statement.Assignmen
                     Arrays.stream(((BasicExpression.ArrayVariable) statement.getIdent()).index)
                           .map(index ->
                               (Integer) ExpressionEvaluator.evaluate(new BasicExpression.Literal(index),
-                                                                   procedureContext))
+                                                                     procedureContext))
                           .toList().toArray(Integer[]::new);
 
                 ApplicationContext.setArrayVariable(
@@ -44,7 +44,7 @@ public class AssignmentStatementExecutor implements Executor<Statement.Assignmen
                     Arrays.stream(((BasicExpression.ArrayVariable) statement.getIdent()).index)
                         .map(index ->
                             (Integer) ExpressionEvaluator.evaluate(new BasicExpression.Literal(index),
-                                procedureContext))
+                                                                   procedureContext))
                         .toList().toArray(Integer[]::new)
                 );
             }

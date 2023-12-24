@@ -8,7 +8,6 @@ import structure.Variable;
 
 import java.util.*;
 import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 
 public class ApplicationContext {
 
@@ -18,8 +17,8 @@ public class ApplicationContext {
     public static final Map<String, Variable> globalVariableList = new HashMap<>();
     public static final Map<String, Array> globalVariableArrayList = new HashMap<>();
     public static final Map<String, Object> globalConstantList = new HashMap<>();
-    public static final Map<String, List<Statement>> globalProcedureList = new HashMap<>();
-    public static final Map<String, String> procedureArgumentList = new HashMap<>();
+    public static final Map<String, Statement.Procedure> globalProcedureList = new HashMap<>();
+    public static final Map<String, String> procedureArgumentMap = new HashMap<>();
 
     public static void initialize(List<Statement> statements) {
         String extractedModuleName = statements.stream()
@@ -72,16 +71,16 @@ public class ApplicationContext {
                       .findFirst()
                       .orElse(Collections.emptyList());
 
-        Map<String, List<Statement>> procedureMap =
+        Map<String, Statement.Procedure> procedureMap =
             statements.stream()
                 .filter(statement -> statement instanceof Statement.Procedure)
                 .collect(Collectors.toMap(statement -> ((Statement.Procedure) statement).getName().lexeme(),
-                                          statement -> ((Statement.Procedure) statement).getBody()));
+                                          statement -> ((Statement.Procedure) statement)));
 
         statements.stream()
                 .filter(statement -> statement instanceof Statement.Procedure)
                 .forEach(statement ->
-                    procedureArgumentList.put(((Statement.Procedure) statement).getName().lexeme(),
+                    procedureArgumentMap.put(((Statement.Procedure) statement).getName().lexeme(),
                                               ((Statement.Procedure) statement).getParameters()
                                                                                 .stream()
                                                                                 .map(parameter ->
@@ -121,8 +120,8 @@ public class ApplicationContext {
         return globalVariableList.getOrDefault(key, null);
     }
 
-    public static List<Statement> getProcedure(String key) {
-        return globalProcedureList.getOrDefault(key, Collections.emptyList());
+    public static Statement.Procedure getProcedure(String key) {
+        return globalProcedureList.getOrDefault(key, null);
     }
 
     public static Object getConst(String key) {
@@ -135,7 +134,7 @@ public class ApplicationContext {
     }
 
     public static String getProcedureArguments(String key) {
-        return procedureArgumentList.getOrDefault(key, null);
+        return procedureArgumentMap.getOrDefault(key, null);
     }
 
     public static void setVariable(String key, Object value) {
